@@ -236,7 +236,7 @@ async function applyFilters() {
     // Filter by data
     if (dataFilter !== 'all') {
         function getDataValue(data) {
-            if (data.includes('Unlimited')) return 100; // Arbitrary high value for unlimited
+            if (data.includes('Unlimited')) return 100; 
             const match = data.match(/(\d+(\.\d+)?)GB/);
             return match ? parseFloat(match[1]) : 0;
         }

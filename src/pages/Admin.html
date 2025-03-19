@@ -55,16 +55,16 @@
                             <span>Logout</span>
                         </a>
                     </div>
-                      <!-- Logout Confirmation Modal -->
-            <div id="logoutModal" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <p>Are you sure you want to logout?</p>
-                    <button id="confirmLogout">Yes</button>
-                    <br>
-                    <button id="cancelLogout">No</button>
-                </div>
-            </div>
+                    <!-- Logout Confirmation Modal -->
+                    <div id="logoutModal" class="modal">
+                        <div class="modal-content">
+                            <span class="close">×</span>
+                            <p>Are you sure you want to logout?</p>
+                            <button id="confirmLogout">Yes</button>
+                            <br>
+                            <button id="cancelLogout">No</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -84,7 +84,6 @@
                         <div class="d-flex align-items-center">
                             <img src="/src/assets/icons/admin-profile.png" alt="Admin Profile" class="rounded-circle me-2"
                                 style="height: 50px;">
-
                             <div>
                                 <h6 class="mb-0">Admin User</h6>
                             </div>
@@ -133,7 +132,6 @@
                                 </div>
                             </div>
                         </div>
-                        
                         <div class="col-xl-3 col-md-6">
                             <div class="card expiry-card p-3">
                                 <div class="d-flex align-items-center">
@@ -147,7 +145,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="col-xl-3 col-md-6">
                             <div class="card plans-card p-3">
                                 <div class="d-flex align-items-center">
@@ -161,7 +158,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="col-xl-3 col-md-6">
                             <div class="card revenue-card p-3">
                                 <div class="d-flex align-items-center">
@@ -204,12 +200,27 @@
                         </div>
                     </div>
 
-                    <!-- Plans & Offers Table -->
+                    <!-- Plans & Offers Section -->
                     <div class="card mb-4" id="Plans">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center">
                             <h5 class="mb-0" style="color: #b44aff;">Active Plans & Offers</h5>
-                            <button class="btn btn-sm btn-primary add-plan-btn">+ Add New Plan</button>                        </div>
-                        <div class="card-body p-0">
+                            <button class="btn btn-sm btn-primary add-plan-btn">+ Add New Plan</button>
+                        </div>
+                        <!-- Category Filter -->
+                        <div class="card-body">
+                            <div class="category-filter mb-3">
+                                <h6>Filter by Category:</h6>
+                                <div class="category-buttons d-flex flex-wrap gap-2">
+                                    <button class="btn btn-outline-primary category-btn active" data-category="all">All Plans</button>
+                                    <button class="btn btn-outline-primary category-btn" data-category="popular">Popular Plans</button>
+                                    <button class="btn btn-outline-primary category-btn" data-category="validity">Validity Plans</button>
+                                    <button class="btn btn-outline-primary category-btn" data-category="data">Data Plans</button>
+                                    <button class="btn btn-outline-primary category-btn" data-category="unlimited">Unlimited Plans</button>
+                                    <button class="btn btn-outline-primary category-btn" data-category="entertainment">Entertainment Plans</button>
+                                    <button class="btn btn-outline-primary category-btn" data-category="international">International Roaming</button>
+                                    <button class="btn btn-outline-primary category-btn" data-category="budget">Budget Plans</button>
+                                </div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-hover mb-0">
                                     <thead class="table-light">
@@ -220,6 +231,7 @@
                                             <th>Data</th>
                                             <th>Price (₹)</th>
                                             <th>Active Users</th>
+                                            <th>Categories</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -234,7 +246,6 @@
             </div>
         </div>
 
-
         <!-- User Details Modal -->
         <div class="modal fade" id="user-modal" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -244,8 +255,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div
-                            class="d-flex flex-column flex-md-row align-items-center align-items-md-start mb-4 pb-4 border-bottom">
+                        <div class="d-flex flex-column flex-md-row align-items-center align-items-md-start mb-4 pb-4 border-bottom">
                             <img src="/src/assets/images/admin-profile (1).png" alt="User" class="user-avatar me-0 me-md-4 mb-3 mb-md-0"
                                 id="modal-user-avatar">
                             <div class="text-center text-md-start">
@@ -278,6 +288,7 @@
                 </div>
             </div>
         </div>
+
         <!-- Add Plan Modal -->
         <div class="modal fade" id="plan-modal" tabindex="-1">
             <div class="modal-dialog">
@@ -295,7 +306,7 @@
                             </div>
                             <div class="mb-3">
                                 <label for="plan-description" class="form-label">Description</label>
-                                <textarea class="form-control" id="plan-description" rows="3" required></textarea>
+                                <textarea class="form-control" id="plan-description" rows="3"></textarea>
                             </div>
                             <div class="mb-3">
                                 <label for="plan-validity" class="form-label">Validity (Days)</label>
@@ -309,6 +320,60 @@
                                 <label for="plan-price" class="form-label">Price (₹)</label>
                                 <input type="number" class="form-control" id="plan-price" min="0" step="0.01" required>
                             </div>
+                            <div class="mb-3">
+                                <label for="plan-sms" class="form-label">SMS</label>
+                                <input type="text" class="form-control" id="plan-sms" placeholder="e.g., 100 SMS/Day">
+                            </div>
+                            <div class="mb-3">
+                                <label for="plan-calls" class="form-label">Calls</label>
+                                <input type="text" class="form-control" id="plan-calls" placeholder="e.g., Unlimited Calls">
+                            </div>
+                            <div class="mb-3">
+                                <label for="plan-benefits" class="form-label">Benefits</label>
+                                <textarea class="form-control" id="plan-benefits" rows="2" placeholder="e.g., Netflix subscription included"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="plan-categories" class="form-label">Categories (select all that apply)</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="popular" id="category-popular">
+                                    <label class="form-check-label" for="category-popular">Popular Plans</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="validity" id="category-validity">
+                                    <label class="form-check-label" for="category-validity">Validity Plans</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="data" id="category-data">
+                                    <label class="form-check-label" for="category-data">Data Plans</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="unlimited" id="category-unlimited">
+                                    <label class="form-check-label" for="category-unlimited">Unlimited Plans</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="entertainment" id="category-entertainment">
+                                    <label class="form-check-label" for="category-entertainment">Entertainment Plans</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="international" id="category-international">
+                                    <label class="form-check-label" for="category-international">International Roaming</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="budget" id="category-budget">
+                                    <label class="form-check-label" for="category-budget">Budget Plans</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="plan-is-hot-deal" class="form-label">Is Hot Deal?</label>
+                                <select class="form-control" id="plan-is-hot-deal">
+                                    <option value="false">No</option>
+                                    <option value="true">Yes</option>
+                                </select>
+                            </div>
+                            <div class="mb-3" id="hot-deal-price" style="display: none;">
+                                <label for="plan-original-price" class="form-label">Original Price (₹)</label>
+                                <input type="number" class="form-control" id="plan-original-price" min="0" step="0.01">
+                            </div>
                             <div class="d-flex justify-content-end gap-2">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
                                     id="cancel-plan">Cancel</button>
@@ -319,51 +384,50 @@
                 </div>
             </div>
         </div>
-       <!-- Mobile sidebar for smaller screens -->
-       <div class="sidebar d-md-none" id="mobileSidebar">
-        <div class="sidebar-header">
-            <a href="/src/pages/MobilePrepaid.html"
-                style="color: white; text-decoration: none; display: flex; align-items: center;">
-                <img src="/src/assets/images/Mobi-icon-2.png" alt="Logo">
-                <h3>Mobi-comm</h3>
-            </a>
-        </div>
-        <div class="sidebar-menu mt-3">
-            <div class="menu-item">
-                <a href="#Dashboard" style="color: white; text-decoration: none;">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
+
+        <!-- Mobile sidebar for smaller screens -->
+        <div class="sidebar d-md-none" id="mobileSidebar">
+            <div class="sidebar-header">
+                <a href="/src/pages/MobilePrepaid.html"
+                    style="color: white; text-decoration: none; display: flex; align-items: center;">
+                    <img src="/src/assets/images/Mobi-icon-2.png" alt="Logo">
+                    <h3>Mobi-comm</h3>
                 </a>
             </div>
-            <div class="menu-item">
-                <a href="/src/pages/subscribers.html" style="color: white; text-decoration: none;">
-                    <i class="fas fa-users"></i>
-                    <span>Subscribers</span>
-                </a>
-            </div>
-            <div class="menu-item">
-                <a href="#Plans" style="color: white; text-decoration: none;">
-                    <i class="fas fa-tag"></i>
-                    <span>Plans & Offers</span>
-                </a>
-            </div>
-            <div class="menu-item active">
-                <a href="/src/pages/Analytics.html" style="color: white; text-decoration: none;">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Analytics</span>
-                </a>
-            </div>
-            <div class="menu-item">
-                <a href="/src/pages/account.html" style="color: white; text-decoration: none;">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
+            <div class="sidebar-menu mt-3">
+                <div class="menu-item">
+                    <a href="#Dashboard" style="color: white; text-decoration: none;">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+                <div class="menu-item">
+                    <a href="/src/pages/subscribers.html" style="color: white; text-decoration: none;">
+                        <i class="fas fa-users"></i>
+                        <span>Subscribers</span>
+                    </a>
+                </div>
+                <div class="menu-item">
+                    <a href="#Plans" style="color: white; text-decoration: none;">
+                        <i class="fas fa-tag"></i>
+                        <span>Plans & Offers</span>
+                    </a>
+                </div>
+                <div class="menu-item active">
+                    <a href="/src/pages/Analytics.html" style="color: white; text-decoration: none;">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                    </a>
+                </div>
+                <div class="menu-item">
+                    <a href="/src/pages/account.html" style="color: white; text-decoration: none;">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
-</div>
-</div>
-</div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 <script src="/src/js/Admin.js"></script>

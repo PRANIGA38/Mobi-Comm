@@ -64,6 +64,23 @@ body {
     text-align: center;
 }
 
+.category-filter h6 {
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.category-buttons .btn {
+    border-radius: 20px;
+    font-size: 14px;
+    padding: 5px 15px;
+}
+
+.category-buttons .btn.active {
+    background-color: #b44aff;
+    color: white;
+    border-color: #b44aff;
+}
+
 .card {
     border: none;
     border-radius: 8px;

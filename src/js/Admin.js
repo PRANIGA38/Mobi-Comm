@@ -1,7 +1,7 @@
 const API_BASE_URL = 'http://localhost:8083/api';
 let jwtToken = localStorage.getItem('jwtToken');
 
-// DOM Elements from your admin.html
+// DOM Elements
 const expiringSubscribersTable = document.getElementById('expiring-subscribers');
 const plansTable = document.getElementById('plans-table');
 const userModal = document.getElementById('user-modal');
@@ -10,13 +10,16 @@ const searchInput = document.getElementById('searchInput');
 const searchButton = document.getElementById('searchButton');
 const sidebarToggle = document.getElementById('sidebarToggle');
 const mobileSidebar = document.getElementById('mobileSidebar');
-const addPlanBtns = document.querySelectorAll('.add-plan-btn'); // Correct: targets both buttons
+const addPlanBtns = document.querySelectorAll('.add-plan-btn');
 const planForm = document.getElementById('plan-form');
 const logoutModal = document.getElementById('logoutModal');
 const logoutButton = document.getElementById('logout');
 const confirmLogoutButton = document.getElementById('confirmLogout');
 const cancelLogoutButton = document.getElementById('cancelLogout');
 const closeModal = document.querySelector('.modal-content .close');
+const categoryButtons = document.querySelectorAll('.category-btn');
+const isHotDealSelect = document.getElementById('plan-is-hot-deal');
+const hotDealPriceDiv = document.getElementById('hot-deal-price');
 
 // Bootstrap Modal Instances
 const userModalInstance = new bootstrap.Modal(userModal);
@@ -34,7 +37,7 @@ async function fetchWithAuth(url, options = {}) {
         'Authorization': `Bearer ${jwtToken}`,
         'Content-Type': 'application/json'
     };
-    console.log('Fetching:', url, 'with headers:', options.headers); // Debug log
+    console.log('Fetching:', url, 'with headers:', options.headers);
     const response = await fetch(url, options);
     if (response.status === 401) {
         console.error('Unauthorized - Redirecting to login');
@@ -115,20 +118,25 @@ function displayExpiringSubscribers(subscribers, searchTerm = '') {
     });
 }
 
-// Fetch and display plans
-async function fetchPlans() {
+// Fetch and display plans by category
+async function fetchPlans(category = 'all') {
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/admin/plans`);
+        const url = category === 'all' ? `${API_BASE_URL}/admin/plans` : `${API_BASE_URL}/admin/plans?category=${category}`;
+        const response = await fetchWithAuth(url);
         const plans = await response.json();
         displayPlans(plans);
     } catch (error) {
         console.error('Error fetching plans:', error);
-        plansTable.innerHTML = `<tr><td colspan="7" class="text-center py-3">Error loading plans</td></tr>`;
+        plansTable.innerHTML = `<tr><td colspan="8" class="text-center py-3">Error loading plans</td></tr>`;
     }
 }
 
 function displayPlans(plans) {
     plansTable.innerHTML = '';
+    if (plans.length === 0) {
+        plansTable.innerHTML = `<tr><td colspan="8" class="text-center py-3">No plans found for this category</td></tr>`;
+        return;
+    }
     plans.forEach(plan => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -138,6 +146,7 @@ function displayPlans(plans) {
             <td>${plan.data}GB</td>
             <td>₹${plan.price}</td>
             <td>${plan.activeUsers || 0}</td>
+            <td>${plan.categories ? plan.categories.map(cat => cat.charAt(0).toUpperCase() + cat.slice(1)).join(', ') : 'N/A'}</td>
             <td>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-primary edit-plan" data-id="${plan.id}">Edit</button>
@@ -184,6 +193,14 @@ async function openUserModal(userId) {
 async function openPlanModal(planId = null) {
     document.getElementById('plan-modal-title').textContent = planId ? 'Edit Plan' : 'Add New Plan';
     document.getElementById('plan-id').value = planId || '';
+    // Reset form fields
+    planForm.reset();
+    document.querySelectorAll('#plan-form input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.getElementById('plan-is-hot-deal').value = 'false';
+    hotDealPriceDiv.style.display = 'none';
+
     if (planId) {
         try {
             const response = await fetchWithAuth(`${API_BASE_URL}/admin/plans/${planId}`);
@@ -193,12 +210,24 @@ async function openPlanModal(planId = null) {
             document.getElementById('plan-validity').value = plan.validity;
             document.getElementById('plan-data').value = plan.data;
             document.getElementById('plan-price').value = plan.price;
+            document.getElementById('plan-sms').value = plan.sms || '';
+            document.getElementById('plan-calls').value = plan.calls || '';
+            document.getElementById('plan-benefits').value = plan.benefits || '';
+            if (plan.categories) {
+                plan.categories.forEach(category => {
+                    const checkbox = document.getElementById(`category-${category}`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            document.getElementById('plan-is-hot-deal').value = plan.isHotDeal ? 'true' : 'false';
+            if (plan.isHotDeal) {
+                hotDealPriceDiv.style.display = 'block';
+                document.getElementById('plan-original-price').value = plan.originalPrice || '';
+            }
         } catch (error) {
             console.error('Error fetching plan:', error);
             alert('Failed to load plan details');
         }
-    } else {
-        planForm.reset();
     }
     planModalInstance.show();
 }
@@ -206,31 +235,42 @@ async function openPlanModal(planId = null) {
 // Save plan (add or update)
 async function savePlan(e) {
     e.preventDefault();
-    console.log('Saving plan with JWT:', jwtToken); // Debug JWT
     const planId = document.getElementById('plan-id').value;
+    const selectedCategories = Array.from(document.querySelectorAll('#plan-form input[type="checkbox"]:checked'))
+        .map(checkbox => checkbox.value);
+    const isHotDeal = document.getElementById('plan-is-hot-deal').value === 'true';
     const plan = {
         name: document.getElementById('plan-name').value,
         description: document.getElementById('plan-description').value || null,
         validity: parseInt(document.getElementById('plan-validity').value),
         data: parseFloat(document.getElementById('plan-data').value),
         price: parseFloat(document.getElementById('plan-price').value),
-        activeUsers: planId ? undefined : 0
+        activeUsers: planId ? undefined : 0,
+        sms: document.getElementById('plan-sms').value || null,
+        calls: document.getElementById('plan-calls').value || null,
+        benefits: document.getElementById('plan-benefits').value || null,
+        categories: selectedCategories.length > 0 ? selectedCategories : null,
+        isHotDeal: isHotDeal,
+        originalPrice: isHotDeal ? parseFloat(document.getElementById('plan-original-price').value) : null
     };
 
     if (!plan.name || isNaN(plan.validity) || isNaN(plan.data) || isNaN(plan.price)) {
         alert('Please fill all required fields with valid data');
         return;
     }
+    if (isHotDeal && (isNaN(plan.originalPrice) || plan.originalPrice <= plan.price)) {
+        alert('Original price must be greater than the current price for a hot deal');
+        return;
+    }
 
     try {
         const url = planId ? `${API_BASE_URL}/admin/plans/${planId}` : `${API_BASE_URL}/admin/plans`;
         const method = planId ? 'PUT' : 'POST';
-        console.log('Request payload:', JSON.stringify(plan)); // Debug payload
         const response = await fetchWithAuth(url, { method, body: JSON.stringify(plan) });
         if (response.ok) {
-            console.log('Plan saved successfully');
             planModalInstance.hide();
-            fetchPlans();
+            const activeCategory = document.querySelector('.category-btn.active').getAttribute('data-category');
+            fetchPlans(activeCategory);
         }
     } catch (error) {
         console.error('Error saving plan:', error.message);
@@ -243,8 +283,12 @@ async function deletePlan(planId) {
     if (!confirm('Are you sure you want to delete this plan?')) return;
     try {
         const response = await fetchWithAuth(`${API_BASE_URL}/admin/plans/${planId}`, { method: 'DELETE' });
-        if (response.ok) fetchPlans();
-        else throw new Error('Failed to delete plan');
+        if (response.ok) {
+            const activeCategory = document.querySelector('.category-btn.active').getAttribute('data-category');
+            fetchPlans(activeCategory);
+        } else {
+            throw new Error('Failed to delete plan');
+        }
     } catch (error) {
         console.error('Error deleting plan:', error);
         alert(error.message);
@@ -272,7 +316,6 @@ function scrollToTop() {
 
 // Event Listeners
 window.addEventListener('DOMContentLoaded', () => {
-    console.log('Admin page loaded, JWT:', jwtToken); // Debug JWT on load
     fetchDashboardStats();
     fetchExpiringSubscribers();
     fetchPlans();
@@ -280,8 +323,23 @@ window.addEventListener('DOMContentLoaded', () => {
     searchButton.addEventListener('click', handleSearch);
     searchInput.addEventListener('keyup', (e) => e.key === 'Enter' && handleSearch());
     sidebarToggle.addEventListener('click', () => mobileSidebar.classList.toggle('show'));
-    addPlanBtns.forEach(btn => btn.addEventListener('click', () => openPlanModal())); // Fixed: Use addPlanBtns
+    addPlanBtns.forEach(btn => btn.addEventListener('click', () => openPlanModal()));
     planForm.addEventListener('submit', savePlan);
+
+    // Category filter buttons
+    categoryButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            categoryButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            const category = button.getAttribute('data-category');
+            fetchPlans(category);
+        });
+    });
+
+    // Hot deal toggle
+    isHotDealSelect.addEventListener('change', () => {
+        hotDealPriceDiv.style.display = isHotDealSelect.value === 'true' ? 'block' : 'none';
+    });
 
     document.addEventListener('click', (e) => {
         if (mobileSidebar.classList.contains('show') && !mobileSidebar.contains(e.target) && e.target !== sidebarToggle) {
