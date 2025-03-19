@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Mobi-comm Plans</title>
+    <link rel="icon" href="/src/assets/images/Mobi-icon-2.png" type="image/png">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="/src/css/View_Plans.css">
+</head>
+
+<body>
+    <!-- Scroll to Top Button -->
+    <button onclick="scrollToTop()" id="scrollTopBtn" title="Go to top">↑</button>
+
+    <!-- Header and Navbar -->
+     <!-- Enhanced Navbar -->
+     <header>
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="container">
+                <a class="navbar-brand" href="/src/pages/MobilePrepaid.html">
+                    <img src="/src/assets/images/Mobi-icon-1.png" alt="Mobi-comm Logo" title="Mobi-comm">
+                    <span style="font-size: 14px; color: #000000; font-weight: 600;">mobi-comm</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/src/pages/Recharge.html">
+                                <i class="bi bi-credit-card"></i> Recharge
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/src/pages/View_Plans.html">
+                                <i class="bi bi-grid-3x3-gap"></i> View Plans
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/src/pages/NewPrepaid.html">
+                                <i class="bi bi-sim"></i> New Prepaid
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="supportDropdown" data-bs-toggle="dropdown">
+                                <i class="bi bi-headset"></i> Support
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/src/pages/FAQs.html"><i class="bi bi-question-circle me-2"></i>FAQs</a></li>
+                                <li><a class="dropdown-item" href="/src/pages/Feedback.html"><i class="bi bi-chat-text me-2"></i>Feedback</a></li>
+                                <li><a class="dropdown-item" href="#Contact"><i class="bi bi-telephone me-2"></i>Contact</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                <a class="nav-link" href="/src/pages/account.html">
+                    <i class="bi bi-person-circle" style="font-size: 24px; color: #34058b;"></i>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <h1>RECHARGE PLANS</h1>
+        <p class="lead">Your Connection, Your Choice!</p>
+    </div>
+
+    <!-- Main Content Container -->
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3 mb-4">
+                <div class="sidebar">
+                    <h4 class="sidebar-title">Plan Categories</h4>
+                    <div class="sidebar-nav">
+                        <div class="sidebar-item active" data-category="all">
+                            <i class="bi bi-grid sidebar-icon"></i> All Plans
+                        </div>
+                        <div class="sidebar-item" data-category="popular">
+                            <i class="bi bi-award sidebar-icon"></i> Popular Plans
+                        </div>
+                        <div class="sidebar-item" data-category="validity">
+                            <i class="bi bi-hourglass-bottom sidebar-icon"></i> Validity Plans
+                        </div>
+                        <div class="sidebar-item" data-category="data">
+                            <i class="bi bi-file-bar-graph sidebar-icon"></i> Data Plans
+                        </div>
+                        <div class="sidebar-item" data-category="unlimited">
+                            <i class="bi bi-infinity sidebar-icon"></i> Unlimited Plans
+                        </div>
+                        <div class="sidebar-item" data-category="entertainment">
+                            <i class="bi bi-film sidebar-icon"></i> Entertainment Plans
+                        </div>
+                        <div class="sidebar-item" data-category="international">
+                            <i class="bi bi-globe sidebar-icon"></i> International Roaming
+                        </div>
+                        <div class="sidebar-item" data-category="budget">
+                            <i class="bi bi-piggy-bank sidebar-icon"></i> Budget Plans
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col-lg-9">
+                <!-- Mobile Category Pills (visible on small screens) -->
+                <div class="category-pills">
+                    <div class="category-pill active" data-category="all">All Plans</div>
+                    <div class="category-pill" data-category="popular">Popular</div>
+                    <div class="category-pill" data-category="validity">Validity</div>
+                    <div class="category-pill" data-category="data">Data</div>
+                    <div class="category-pill" data-category="unlimited">Unlimited</div>
+                    <div class="category-pill" data-category="entertainment">Entertainment</div>
+                    <div class="category-pill" data-category="international">International</div>
+                    <div class="category-pill" data-category="budget">Budget</div>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="filter-section">
+                    <div class="filter-group">
+                        <label for="priceRange" class="filter-label">Price Range</label>
+                        <select id="priceRange" class="filter-input">
+                            <option value="all">All Prices</option>
+                            <option value="0-100">₹0 - ₹100</option>
+                            <option value="100-200">₹100 - ₹200</option>
+                            <option value="200-500">₹200 - ₹500</option>
+                            <option value="500-1000">₹500 - ₹1000</option>
+                            <option value="1000+">₹1000+</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="validityFilter" class="filter-label">Validity</label>
+                        <select id="validityFilter" class="filter-input">
+                            <option value="all">All Durations</option>
+                            <option value="0-28">Up to 28 Days</option>
+                            <option value="29-84">29 - 84 Days</option>
+                            <option value="85-180">85 - 180 Days</option>
+                            <option value="181+">181+ Days</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="dataFilter" class="filter-label">Data Allowance</label>
+                        <select id="dataFilter" class="filter-input">
+                            <option value="all">All Data Plans</option>
+                            <option value="basic">Basic (up to 1GB/day)</option>
+                            <option value="standard">Standard (1-2GB/day)</option>
+                            <option value="high">High (2GB+/day)</option>
+                        </select>
+                    </div>
+                    <button id="applyFilters" class="filter-button">
+                        <i class="bi bi-funnel"></i> Apply Filters
+                    </button>
+                    <button id="resetFilters" class="filter-reset">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </button>
+                </div>
+
+                <!-- Plans Display Area -->
+                <div class="plans-container" id="plansContainer">
+                    <!-- Plans will be dynamically loaded here by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan Details Modal -->
+    <div class="modal fade" id="planDetailsModal" tabindex="-1" aria-labelledby="planDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="planDetailsModalLabel">Plan Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="planDetailsModalBody">
+                    <!-- Content will be dynamically populated by JavaScript -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary btn-select-from-modal">Select Plan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="Contact" class="mt-5">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h5>Contact Us</h5>
+                <p><i class="bi bi-telephone"></i> +91 98765 43210</p>
+                <p><i class="bi bi-envelope"></i> support@mobi-comm.com</p>
+            </div>
+            <div class="footer-section">
+                <h5>Quick Links</h5>
+                <p>
+                    <a href="/src/pages/View_Plans.html">Plans</a> |
+                    <a href="/src/pages/FAQs.html">FAQs</a> |
+                    <a href="/src/pages/Feedback.html">Feedback</a>
+                </p>
+            </div>
+            <div class="footer-section">
+                <h5>Download App</h5>
+                <p>
+                    <i class="bi bi-google-play"></i> Play Store |
+                    <i class="bi bi-apple"></i> App Store
+                </p>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2025 Mobi-comm. All rights reserved</p>
+        </div>
+    </footer>
+
+    <script src="/src/js/View_Plans.js"></script>
+</body>
+</html>

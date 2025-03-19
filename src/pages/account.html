@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account</title>
+    <link rel="icon" href="/src/assets/images/Mobi-icon-2.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="/src/css/account.css">
+</head>
+
+<body>
+    <!-- Scroll to Top Button -->
+    <button onclick="scrollToTop()" id="scrollTopBtn" title="Go to top">↑</button>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="container">
+                <a class="navbar-brand" href="/src/pages/MobilePrepaid.html">
+                    <img src="/src/assets/images/Mobi-icon-1.png" alt="Mobi-comm Logo" title="Mobi-comm">
+                    <span style="font-size: 14px; color: #5680E9; font-weight: 600;">mobi-comm</span>
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/src/pages/Recharge.html">
+                                <i class="bi bi-credit-card"></i> Recharge
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/src/pages/View_Plans.html">
+                                <i class="bi bi-grid-3x3-gap"></i> View Plans
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/src/pages/NewPrepaid.html">
+                                <i class="bi bi-sim"></i> New Prepaid
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="supportDropdown" data-bs-toggle="dropdown">
+                                <i class="bi bi-headset"></i> Support
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/src/pages/FAQs.html"><i class="bi bi-question-circle me-2"></i>FAQs</a></li>
+                                <li><a class="dropdown-item" href="/src/pages/Feedback.html"><i class="bi bi-chat-text me-2"></i>Feedback</a></li>
+                                <li><a class="dropdown-item" href="#Contact"><i class="bi bi-telephone me-2"></i>Contact</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                <a class="nav-link" href="/src/pages/account.html">
+                    <i class="bi bi-person-circle" style="font-size: 24px; color: #ffffff;"></i>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="welcome-section">
+        <h1>Welcome Back to MobiComm</h1>
+        <p class="lead">Join the Mobi-Comm Family!</p>
+    </div>
+
+    <div class="container">
+        <div class="toggle-buttons">
+            <button class="toggle-btn active" onclick="showForm('mobile')">User Login</button>
+            <button class="toggle-btn" onclick="showForm('admin')">Admin Login</button>
+        </div>
+
+        <div class="form-container" id="mobileLogin">
+            <h4>Mobile Login</h4>
+
+            <!-- Mobile Input Container -->
+            <div id="mobile-container">
+                <form id="otpForm">
+                    <div class="form-group">
+                        <label for="mobile" class="form-label">Mobile Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                            <input type="text" class="form-control" id="mobile" placeholder="Enter your mobile number"
+                                required>
+                        </div>
+                        <div class="error" id="mobile-error">Please enter a valid 10-digit mobile number</div>
+                    </div>
+                    <button type="submit" class="btn btn-custom">Get OTP</button>
+                </form>
+            </div>
+
+            <!-- OTP Verification Container -->
+            <div id="otp-container" style="display: none;">
+                <div class="text-center mb-4">
+                    <h5>OTP Verification</h5>
+                    <p class="text-muted">Enter the OTP sent to <span id="mobile-display" class="fw-bold"></span></p>
+                </div>
+
+                <div class="form-group">
+                    <label for="otp-input" class="form-label">Enter OTP</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                        <input type="text" class="form-control" id="otp-input" placeholder="6-digit OTP" maxlength="6">
+                    </div>
+                    <div class="error" id="otp-error"></div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <small class="text-muted">OTP expires in <span id="timer">60s</span></small>
+                    <button type="button" class="btn btn-link btn-sm p-0" id="resend-btn" onclick="resendOTP()"
+                        disabled>Resend OTP</button>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary flex-grow-1" onclick="goBackToMobile()">
+                        <i class="bi bi-arrow-left me-1"></i> Back
+                    </button>
+                    <button type="button" class="btn btn-custom flex-grow-2" onclick="verifyOTP()">Verify &
+                        Login</button>
+                </div>
+            </div>
+
+            <!-- Success Container -->
+            <div id="success-container" style="display: none;" class="text-center">
+                <div class="my-4">
+                    <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+                    <h5 class="mt-3">Login Successful!</h5>
+                    <p class="text-muted">Redirecting to your Profile...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-container" id="adminLogin" style="display: none;">
+            <h4>Admin Login</h4>
+            <form id="adminForm">
+                <div class="form-group">
+                    <label for="username" class="form-label">Admin ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control" id="username" placeholder="Enter admin ID">
+                    </div>
+                    <div class="error" id="username-error">Admin ID is required</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control" id="password" placeholder="Enter admin password">
+                    </div>
+                    <div class="error" id="password-error">Password is required</div>
+                </div>
+
+                <button type="submit" class="btn btn-custom">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <footer id="contact">
+        <div class="footer-content">
+            <h5>Contact Us</h5>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="bi bi-telephone"></i>
+                    <span>+91 98765 43210</span>
+                </div>
+                <div class="contact-item">
+                    <i class="bi bi-envelope"></i>
+                    <span>support@mobi-comm.com</span>
+                </div>
+                <div class="contact-item">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>123, Mobi Street, TN, India</span>
+                </div>
+            </div>
+            <p class="mt-4">&copy; 2025 MobiComm. All rights reserved</p>
+        </div>
+    </footer>
+    <!-- otp box -->
+    <div class="modal fade" id="otpModal" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="otpModalLabel">OTP Sent Successfully</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="mb-4">
+                        <i class="bi bi-envelope-check text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    <p class="mb-2">Your OTP has been sent to</p>
+                    <h5 class="text-primary mb-4" id="otpMobileDisplay"></h5>
+                    <div class="otp-display p-3 bg-light rounded mb-3">
+                        <span class="h3 font-monospace" id="otpDisplayText"></span>
+                    </div>
+                    <p class="text-muted small">Please use this OTP to verify your mobile number</p>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="btn btn-custom" data-bs-dismiss="modal">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+ <script src="/src/js/account.js"></script>
+</body>
+
+</html>

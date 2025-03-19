@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin</title>
+    <link rel="icon" href="/src/assets/images/Mobi-icon-2.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="/src/css/Admin.css">
+</head>
+<body>
+    <!-- Scroll to Top Button -->
+    <button onclick="scrollToTop()" id="scrollTopBtn" title="Go to top">↑</button>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-2 col-md-3 p-0 sidebar d-none d-md-block">
+                <div class="sidebar-header">
+                    <a href="/src/pages/MobilePrepaid.html"
+                        style="color: white; text-decoration: none; display: flex; align-items: center;">
+                        <img src="/src/assets/images/Mobi-icon-2.png" alt="Logo">
+                        <h3>Mobi-comm</h3>
+                    </a>
+                </div>
+                <div class="sidebar-menu mt-3">
+                    <div class="menu-item active">
+                        <a href="#Dashboard" style="color: white; text-decoration: none;">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    </div>
+                    <div class="menu-item">
+                        <a href="/src/pages/subscribers.html" style="color: white; text-decoration: none;">
+                        <i class="fas fa-users"></i>
+                        <span>Subscribers</span>
+                    </a>
+                    </div>
+                    <div class="menu-item">
+                        <a href="#Plans" style="color: white; text-decoration: none;">
+                        <i class="fas fa-tag"></i>
+                        <span>Plans & Offers</span>
+                    </a>
+                    </div>
+                    <div class="menu-item">
+                        <a href="/src/pages/Analytics.html" style="color: white; text-decoration: none;">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a href="/src/pages/account.html" class="quick-action d-block" id="logout" style="color: white; text-decoration: none;" >
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                      <!-- Logout Confirmation Modal -->
+            <div id="logoutModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <p>Are you sure you want to logout?</p>
+                    <button id="confirmLogout">Yes</button>
+                    <br>
+                    <button id="cancelLogout">No</button>
+                </div>
+            </div>
+                </div>
+            </div>
+
+            <!-- Mobile sidebar toggle button -->
+            <div class="d-md-none position-fixed start-0 top-0 mt-2 ms-2 z-3">
+                <button id="sidebarToggle" class="btn btn-primary">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-10 col-md-9 ms-auto content-wrapper">
+                <div class="container-fluid p-4">
+                    <!-- Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                        <h2>Admin Dashboard</h2>
+                        <div class="d-flex align-items-center">
+                            <img src="/src/assets/icons/admin-profile.png" alt="Admin Profile" class="rounded-circle me-2"
+                                style="height: 50px;">
+
+                            <div>
+                                <h6 class="mb-0">Admin User</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Welcome Section -->
+                    <div class="welcome-section fade-in mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-7">
+                                <h2>Welcome back, Admin User!</h2>
+                                <p>Manage your subscribers, plans, and analytics here . . .</p>
+                                <div class="quick-actions">
+                                    <button class="quick-action-btn add-plan-btn">
+                                        <i class="fas fa-tag me-2"></i>Add New Plan
+                                    </button>
+                                    <button class="quick-action-btn">
+                                        <i class="fas fa-download me-2"></i>Export Reports
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Search Bar -->
+                    <div class="mb-4">
+                        <div class="input-group">
+                            <input type="text" id="searchInput" class="form-control"
+                                placeholder="Search subscribers...">
+                            <button id="searchButton" class="btn btn-primary">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Cards -->
+                    <div class="row g-4 mb-4" id="Dashboard">
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card user-card p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="card-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="mb-0">2,543</h4>
+                                        <p class="text-muted mb-0">Total Subscribers</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card expiry-card p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="card-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="mb-0">58</h4>
+                                        <p class="text-muted mb-0">Expiring Soon</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card plans-card p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="card-icon">
+                                        <i class="fas fa-tag"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="mb-0">32</h4>
+                                        <p class="text-muted mb-0">Active Plans</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card revenue-card p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="card-icon">
+                                        <i class="fas fa-rupee-sign"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="mb-0">₹3.2M</h4>
+                                        <p class="text-muted mb-0">Monthly Revenue</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expiring Subscribers Table -->
+                    <div class="card mb-4" id="Subscribers">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0" style="color: #b44aff;">Subscribers with Expiring Plans (Next 3 Days)</h5>
+                            <a href="#" class="btn btn-sm btn-primary">View All</a>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Subscriber</th>
+                                            <th>Contact</th>
+                                            <th>Current Plan</th>
+                                            <th>Expiry</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expiring-subscribers">
+                                        <!-- Dynamically populated with JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plans & Offers Table -->
+                    <div class="card mb-4" id="Plans">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0" style="color: #b44aff;">Active Plans & Offers</h5>
+                            <button class="btn btn-sm btn-primary add-plan-btn">+ Add New Plan</button>                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Plan Name</th>
+                                            <th>Description</th>
+                                            <th>Validity</th>
+                                            <th>Data</th>
+                                            <th>Price (₹)</th>
+                                            <th>Active Users</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="plans-table">
+                                        <!-- Dynamically populated with JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- User Details Modal -->
+        <div class="modal fade" id="user-modal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Subscriber Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div
+                            class="d-flex flex-column flex-md-row align-items-center align-items-md-start mb-4 pb-4 border-bottom">
+                            <img src="/src/assets/images/admin-profile (1).png" alt="User" class="user-avatar me-0 me-md-4 mb-3 mb-md-0"
+                                id="modal-user-avatar">
+                            <div class="text-center text-md-start">
+                                <h4 id="modal-user-name">Loading...</h4>
+                                <p id="modal-user-phone" class="mb-1">Loading...</p>
+                                <p id="modal-user-email" class="mb-1">Loading...</p>
+                                <p id="modal-user-address" class="mb-0">Loading...</p>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 class="mb-3">Recharge History</h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Plan Name</th>
+                                            <th>Amount (₹)</th>
+                                            <th>Payment Mode</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recharge-history-table">
+                                        <!-- Dynamically populated with JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Add Plan Modal -->
+        <div class="modal fade" id="plan-modal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="plan-modal-title">Add New Plan</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="plan-form">
+                            <input type="hidden" id="plan-id">
+                            <div class="mb-3">
+                                <label for="plan-name" class="form-label">Plan Name</label>
+                                <input type="text" class="form-control" id="plan-name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="plan-description" class="form-label">Description</label>
+                                <textarea class="form-control" id="plan-description" rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="plan-validity" class="form-label">Validity (Days)</label>
+                                <input type="number" class="form-control" id="plan-validity" min="1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="plan-data" class="form-label">Data (GB)</label>
+                                <input type="number" class="form-control" id="plan-data" step="0.1" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="plan-price" class="form-label">Price (₹)</label>
+                                <input type="number" class="form-control" id="plan-price" min="0" step="0.01" required>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                                    id="cancel-plan">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save Plan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+       <!-- Mobile sidebar for smaller screens -->
+       <div class="sidebar d-md-none" id="mobileSidebar">
+        <div class="sidebar-header">
+            <a href="/src/pages/MobilePrepaid.html"
+                style="color: white; text-decoration: none; display: flex; align-items: center;">
+                <img src="/src/assets/images/Mobi-icon-2.png" alt="Logo">
+                <h3>Mobi-comm</h3>
+            </a>
+        </div>
+        <div class="sidebar-menu mt-3">
+            <div class="menu-item">
+                <a href="#Dashboard" style="color: white; text-decoration: none;">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/src/pages/subscribers.html" style="color: white; text-decoration: none;">
+                    <i class="fas fa-users"></i>
+                    <span>Subscribers</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="#Plans" style="color: white; text-decoration: none;">
+                    <i class="fas fa-tag"></i>
+                    <span>Plans & Offers</span>
+                </a>
+            </div>
+            <div class="menu-item active">
+                <a href="/src/pages/Analytics.html" style="color: white; text-decoration: none;">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/src/pages/account.html" style="color: white; text-decoration: none;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+<script src="/src/js/Admin.js"></script>
+</body>
+</html>
