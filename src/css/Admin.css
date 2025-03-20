@@ -283,6 +283,26 @@ body {
     border-radius: 50%;
     margin-right: 10px;
 }
+.pagination .page-item .page-link {
+    color: #b44aff;
+    border-radius: 5px;
+    margin: 0 2px;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #b44aff;
+    border-color: #b44aff;
+    color: white;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.pagination .page-item .page-link:hover:not(.disabled) {
+    background-color: #e9ecef;
+}
 
 .footer {
     background-color: white;

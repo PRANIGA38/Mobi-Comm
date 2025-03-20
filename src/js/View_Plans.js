@@ -13,7 +13,8 @@ async function fetchPlans() {
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        return await response.json();
+        const plans = await response.json();
+        return plans;
     } catch (error) {
         console.error('Error fetching plans:', error);
         return [];
@@ -186,7 +187,20 @@ async function showPlanDetails(planId) {
 async function selectPlan(planId) {
     const plans = await fetchPlans();
     const plan = plans.find(p => p.id == planId);
-    const mobileNumber = document.getElementById('sidebarMobile').value;
+    const mobileInput = document.getElementById('sidebarMobile');
+    const mobileNumber = mobileInput.value.trim();
+    const mobileError = document.getElementById('sidebarMobileError');
+
+    // Check if mobile number is empty
+    if (!mobileNumber) {
+        mobileError.textContent = 'Please enter a mobile number';
+        mobileError.style.display = 'block';
+        mobileInput.style.borderColor = '#dc3545';
+        mobileInput.focus(); // Focus on the input field to prompt user
+        return; // Stop execution if mobile number is missing
+    }
+
+    // If mobile number exists, proceed to payment page
     window.location.href = `/src/pages/Payment.html?amount=${plan.price}&mobile=${mobileNumber}`;
 }
 

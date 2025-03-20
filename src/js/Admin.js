@@ -6,24 +6,38 @@ const expiringSubscribersTable = document.getElementById('expiring-subscribers')
 const plansTable = document.getElementById('plans-table');
 const userModal = document.getElementById('user-modal');
 const planModal = document.getElementById('plan-modal');
+const categoryModal = document.getElementById('category-modal');
 const searchInput = document.getElementById('searchInput');
 const searchButton = document.getElementById('searchButton');
 const sidebarToggle = document.getElementById('sidebarToggle');
 const mobileSidebar = document.getElementById('mobileSidebar');
 const addPlanBtns = document.querySelectorAll('.add-plan-btn');
+const addCategoryBtn = document.querySelector('.add-category-btn');
 const planForm = document.getElementById('plan-form');
+const categoryForm = document.getElementById('category-form');
 const logoutModal = document.getElementById('logoutModal');
 const logoutButton = document.getElementById('logout');
 const confirmLogoutButton = document.getElementById('confirmLogout');
 const cancelLogoutButton = document.getElementById('cancelLogout');
 const closeModal = document.querySelector('.modal-content .close');
-const categoryButtons = document.querySelectorAll('.category-btn');
+const categoryButtonsContainer = document.getElementById('category-buttons');
+const planCategoriesContainer = document.getElementById('plan-categories-container');
+const categoriesTable = document.getElementById('categories-table');
+const paginationControls = document.getElementById('pagination-controls');
 const isHotDealSelect = document.getElementById('plan-is-hot-deal');
 const hotDealPriceDiv = document.getElementById('hot-deal-price');
 
 // Bootstrap Modal Instances
 const userModalInstance = new bootstrap.Modal(userModal);
 const planModalInstance = new bootstrap.Modal(planModal);
+const categoryModalInstance = new bootstrap.Modal(categoryModal);
+
+// Pagination settings
+const PLANS_PER_PAGE = 4;
+let currentPage = 1;
+let allPlans = [];
+let totalPages = 1;
+let allCategories = [];
 
 // Fetch utility with authentication
 async function fetchWithAuth(url, options = {}) {
@@ -53,7 +67,7 @@ async function fetchWithAuth(url, options = {}) {
     return response;
 }
 
-// Fetch and display dashboard stats (static for now, replace with API if available)
+// Fetch and display dashboard stats
 async function fetchDashboardStats() {
     try {
         const stats = { totalSubscribers: 2543, expiringSoon: 58, activePlans: 32, monthlyRevenue: 3200000 };
@@ -118,26 +132,111 @@ function displayExpiringSubscribers(subscribers, searchTerm = '') {
     });
 }
 
-// Fetch and display plans by category
+// Fetch categories
+async function fetchCategories() {
+    try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/categories`);
+        allCategories = await response.json();
+        displayCategories();
+        renderCategoryFilters();
+        renderPlanCategoryCheckboxes();
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        categoriesTable.innerHTML = `<tr><td colspan="2" class="text-center py-3">Error loading categories</td></tr>`;
+    }
+}
+
+// Display categories in the table
+function displayCategories() {
+    categoriesTable.innerHTML = '';
+    if (allCategories.length === 0) {
+        categoriesTable.innerHTML = `<tr><td colspan="2" class="text-center py-3">No categories found</td></tr>`;
+        return;
+    }
+    allCategories.forEach(category => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="fw-medium">${category.name.charAt(0).toUpperCase() + category.name.slice(1)}</td>
+            <td>
+                <button class="btn btn-sm btn-danger delete-category" data-id="${category.id}">Delete</button>
+            </td>
+        `;
+        categoriesTable.appendChild(row);
+    });
+
+    document.querySelectorAll('.delete-category').forEach(button => {
+        button.addEventListener('click', () => deleteCategory(parseInt(button.getAttribute('data-id'))));
+    });
+}
+
+// Render category filter buttons
+function renderCategoryFilters() {
+    categoryButtonsContainer.innerHTML = '<button class="btn btn-outline-primary category-btn active" data-category="all">All Plans</button>';
+    allCategories.forEach(category => {
+        const button = document.createElement('button');
+        button.className = 'btn btn-outline-primary category-btn';
+        button.setAttribute('data-category', category.name);
+        button.textContent = `${category.name.charAt(0).toUpperCase() + category.name.slice(1)} Plans`;
+        categoryButtonsContainer.appendChild(button);
+    });
+
+    // Re-attach event listeners
+    document.querySelectorAll('.category-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            const category = button.getAttribute('data-category');
+            fetchPlans(category);
+        });
+    });
+}
+
+// Render category checkboxes in the plan modal
+function renderPlanCategoryCheckboxes() {
+    planCategoriesContainer.innerHTML = '';
+    allCategories.forEach(category => {
+        const div = document.createElement('div');
+        div.className = 'form-check';
+        div.innerHTML = `
+            <input class="form-check-input" type="checkbox" value="${category.name}" id="category-${category.name}">
+            <label class="form-check-label" for="category-${category.name}">
+                ${category.name.charAt(0).toUpperCase() + category.name.slice(1)} Plans
+            </label>
+        `;
+        planCategoriesContainer.appendChild(div);
+    });
+}
+
+// Fetch plans by category
 async function fetchPlans(category = 'all') {
     try {
         const url = category === 'all' ? `${API_BASE_URL}/admin/plans` : `${API_BASE_URL}/admin/plans?category=${category}`;
         const response = await fetchWithAuth(url);
-        const plans = await response.json();
-        displayPlans(plans);
+        allPlans = await response.json();
+        currentPage = 1;
+        displayPlansWithPagination();
     } catch (error) {
         console.error('Error fetching plans:', error);
         plansTable.innerHTML = `<tr><td colspan="8" class="text-center py-3">Error loading plans</td></tr>`;
+        paginationControls.innerHTML = '';
     }
 }
 
-function displayPlans(plans) {
-    plansTable.innerHTML = '';
-    if (plans.length === 0) {
+// Display plans with pagination
+function displayPlansWithPagination() {
+    if (allPlans.length === 0) {
         plansTable.innerHTML = `<tr><td colspan="8" class="text-center py-3">No plans found for this category</td></tr>`;
+        paginationControls.innerHTML = '';
         return;
     }
-    plans.forEach(plan => {
+
+    totalPages = Math.ceil(allPlans.length / PLANS_PER_PAGE);
+    const startIndex = (currentPage - 1) * PLANS_PER_PAGE;
+    const endIndex = startIndex + PLANS_PER_PAGE;
+    const paginatedPlans = allPlans.slice(startIndex, endIndex);
+
+    plansTable.innerHTML = '';
+    paginatedPlans.forEach(plan => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td class="fw-medium">${plan.name}</td>
@@ -146,11 +245,11 @@ function displayPlans(plans) {
             <td>${plan.data}GB</td>
             <td>₹${plan.price}</td>
             <td>${plan.activeUsers || 0}</td>
-            <td>${plan.categories ? plan.categories.map(cat => cat.charAt(0).toUpperCase() + cat.slice(1)).join(', ') : 'N/A'}</td>
+            <td>${plan.categories ? plan.categories.map(cat => cat.name.charAt(0).toUpperCase() + cat.name.slice(1)).join(', ') : 'N/A'}</td>
             <td>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-primary edit-plan" data-id="${plan.id}">Edit</button>
-                    <button class="btn btn-sm btn-danger delete-plan" data-id="${plan.id}">Delete</button>
+                    <button class="btn btn-sm btn-warning deactivate-plan" data-id="${plan.id}">Deactivate</button>
                 </div>
             </td>
         `;
@@ -160,9 +259,52 @@ function displayPlans(plans) {
     document.querySelectorAll('.edit-plan').forEach(button => {
         button.addEventListener('click', () => openPlanModal(parseInt(button.getAttribute('data-id'))));
     });
-    document.querySelectorAll('.delete-plan').forEach(button => {
-        button.addEventListener('click', () => deletePlan(parseInt(button.getAttribute('data-id'))));
+    document.querySelectorAll('.deactivate-plan').forEach(button => {
+        button.addEventListener('click', () => deactivatePlan(parseInt(button.getAttribute('data-id'))));
     });
+
+    renderPaginationControls();
+}
+
+// Render pagination controls
+function renderPaginationControls() {
+    paginationControls.innerHTML = '';
+
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" aria-label="Previous"><span aria-hidden="true">«</span></a>`;
+    prevLi.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentPage > 1) {
+            currentPage--;
+            displayPlansWithPagination();
+        }
+    });
+    paginationControls.appendChild(prevLi);
+
+    for (let i = 1; i <= totalPages; i++) {
+        const pageLi = document.createElement('li');
+        pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        pageLi.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+        pageLi.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentPage = i;
+            displayPlansWithPagination();
+        });
+        paginationControls.appendChild(pageLi);
+    }
+
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" aria-label="Next"><span aria-hidden="true">»</span></a>`;
+    nextLi.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentPage < totalPages) {
+            currentPage++;
+            displayPlansWithPagination();
+        }
+    });
+    paginationControls.appendChild(nextLi);
 }
 
 // Search functionality
@@ -193,7 +335,6 @@ async function openUserModal(userId) {
 async function openPlanModal(planId = null) {
     document.getElementById('plan-modal-title').textContent = planId ? 'Edit Plan' : 'Add New Plan';
     document.getElementById('plan-id').value = planId || '';
-    // Reset form fields
     planForm.reset();
     document.querySelectorAll('#plan-form input[type="checkbox"]').forEach(checkbox => {
         checkbox.checked = false;
@@ -215,7 +356,7 @@ async function openPlanModal(planId = null) {
             document.getElementById('plan-benefits').value = plan.benefits || '';
             if (plan.categories) {
                 plan.categories.forEach(category => {
-                    const checkbox = document.getElementById(`category-${category}`);
+                    const checkbox = document.getElementById(`category-${category.name}`);
                     if (checkbox) checkbox.checked = true;
                 });
             }
@@ -237,7 +378,7 @@ async function savePlan(e) {
     e.preventDefault();
     const planId = document.getElementById('plan-id').value;
     const selectedCategories = Array.from(document.querySelectorAll('#plan-form input[type="checkbox"]:checked'))
-        .map(checkbox => checkbox.value);
+        .map(checkbox => ({ name: checkbox.value }));
     const isHotDeal = document.getElementById('plan-is-hot-deal').value === 'true';
     const plan = {
         name: document.getElementById('plan-name').value,
@@ -251,7 +392,8 @@ async function savePlan(e) {
         benefits: document.getElementById('plan-benefits').value || null,
         categories: selectedCategories.length > 0 ? selectedCategories : null,
         isHotDeal: isHotDeal,
-        originalPrice: isHotDeal ? parseFloat(document.getElementById('plan-original-price').value) : null
+        originalPrice: isHotDeal ? parseFloat(document.getElementById('plan-original-price').value) : null,
+        isActive: true
     };
 
     if (!plan.name || isNaN(plan.validity) || isNaN(plan.data) || isNaN(plan.price)) {
@@ -278,19 +420,65 @@ async function savePlan(e) {
     }
 }
 
-// Delete plan
-async function deletePlan(planId) {
-    if (!confirm('Are you sure you want to delete this plan?')) return;
+// Deactivate plan
+async function deactivatePlan(planId) {
+    if (!confirm('Are you sure you want to deactivate this plan? It will no longer be visible to users.')) return;
     try {
         const response = await fetchWithAuth(`${API_BASE_URL}/admin/plans/${planId}`, { method: 'DELETE' });
         if (response.ok) {
             const activeCategory = document.querySelector('.category-btn.active').getAttribute('data-category');
             fetchPlans(activeCategory);
         } else {
-            throw new Error('Failed to delete plan');
+            throw new Error('Failed to deactivate plan');
         }
     } catch (error) {
-        console.error('Error deleting plan:', error);
+        console.error('Error deactivating plan:', error);
+        alert(error.message);
+    }
+}
+
+// Open category modal
+function openCategoryModal() {
+    categoryForm.reset();
+    categoryModalInstance.show();
+}
+
+// Save category
+async function saveCategory(e) {
+    e.preventDefault();
+    const categoryName = document.getElementById('category-name').value.trim();
+    if (!categoryName) {
+        alert('Please enter a category name');
+        return;
+    }
+
+    try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/categories`, {
+            method: 'POST',
+            body: JSON.stringify({ name: categoryName.toLowerCase() })
+        });
+        if (response.ok) {
+            categoryModalInstance.hide();
+            fetchCategories();
+        }
+    } catch (error) {
+        console.error('Error saving category:', error.message);
+        alert('Failed to save category: ' + error.message);
+    }
+}
+
+// Delete category
+async function deleteCategory(categoryId) {
+    if (!confirm('Are you sure you want to delete this category? Plans associated with this category will lose this category.')) return;
+    try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/categories/${categoryId}`, { method: 'DELETE' });
+        if (response.ok) {
+            fetchCategories();
+        } else {
+            throw new Error('Failed to delete category');
+        }
+    } catch (error) {
+        console.error('Error deleting category:', error);
         alert(error.message);
     }
 }
@@ -319,24 +507,16 @@ window.addEventListener('DOMContentLoaded', () => {
     fetchDashboardStats();
     fetchExpiringSubscribers();
     fetchPlans();
+    fetchCategories();
 
     searchButton.addEventListener('click', handleSearch);
     searchInput.addEventListener('keyup', (e) => e.key === 'Enter' && handleSearch());
     sidebarToggle.addEventListener('click', () => mobileSidebar.classList.toggle('show'));
     addPlanBtns.forEach(btn => btn.addEventListener('click', () => openPlanModal()));
+    addCategoryBtn.addEventListener('click', openCategoryModal);
     planForm.addEventListener('submit', savePlan);
+    categoryForm.addEventListener('submit', saveCategory);
 
-    // Category filter buttons
-    categoryButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            categoryButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            const category = button.getAttribute('data-category');
-            fetchPlans(category);
-        });
-    });
-
-    // Hot deal toggle
     isHotDealSelect.addEventListener('change', () => {
         hotDealPriceDiv.style.display = isHotDealSelect.value === 'true' ? 'block' : 'none';
     });
