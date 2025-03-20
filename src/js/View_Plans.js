@@ -13,15 +13,14 @@ async function fetchPlans() {
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        const plans = await response.json();
-        return plans;
+        return await response.json();
     } catch (error) {
         console.error('Error fetching plans:', error);
         return [];
     }
 }
 
-// Function to display plans based on filters
+// Function to display plans
 function displayPlans(filteredPlans) {
     const plansContainer = document.getElementById('plansContainer');
     plansContainer.innerHTML = '';
@@ -32,8 +31,7 @@ function displayPlans(filteredPlans) {
                 <i class="bi bi-exclamation-circle" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 20px;"></i>
                 <h4>No plans match your current filters</h4>
                 <p>Try adjusting your filters or reset them to see all available plans.</p>
-            </div>
-        `;
+            </div>`;
         return;
     }
 
@@ -42,7 +40,6 @@ function displayPlans(filteredPlans) {
         planCard.className = 'plan-card';
         planCard.setAttribute('data-plan-id', plan.id);
 
-        // Add category badge
         const mainCategory = plan.categories && plan.categories.length > 0 ? plan.categories[0] : 'all';
         let categoryName = mainCategory.charAt(0).toUpperCase() + mainCategory.slice(1);
 
@@ -81,13 +78,11 @@ function displayPlans(filteredPlans) {
                 </div>
                 <button class="btn-select-plan">Select Plan</button>
                 <button class="btn-plan-details" data-bs-toggle="modal" data-bs-target="#planDetailsModal" data-plan-id="${plan.id}">View Details</button>
-            </div>
-        `;
+            </div>`;
 
         plansContainer.appendChild(planCard);
     });
 
-    // Add event listeners to the buttons
     document.querySelectorAll('.btn-plan-details').forEach(button => {
         button.addEventListener('click', function() {
             const planId = this.getAttribute('data-plan-id');
@@ -104,7 +99,7 @@ function displayPlans(filteredPlans) {
     });
 }
 
-// Function to show plan details in modal
+// Show plan details in modal
 async function showPlanDetails(planId) {
     const plans = await fetchPlans();
     const plan = plans.find(p => p.id == planId);
@@ -112,7 +107,6 @@ async function showPlanDetails(planId) {
     const modalTitle = document.getElementById('planDetailsModalLabel');
 
     modalTitle.textContent = `Plan Details - ₹${plan.price}`;
-
     modalBody.innerHTML = `
         <div class="row">
             <div class="col-md-6">
@@ -170,8 +164,7 @@ async function showPlanDetails(planId) {
                     <div class="benefit-text">
                         <strong>Hot Deal:</strong> Save ₹${plan.originalPrice - plan.price} on this limited-time offer!
                     </div>
-                </div>
-                ` : ''}
+                </div>` : ''}
             </div>
         </div>
         <hr>
@@ -181,39 +174,36 @@ async function showPlanDetails(planId) {
                 <li>All plans are subject to Fair Usage Policy.</li>
                 <li>Data speeds may vary based on network congestion and location.</li>
                 <li>Unused benefits will expire at the end of plan validity.</li>
-                <li>SMS benefits are not applicable on blackout days (festive and national holidays).</li>
+                <li>SMS benefits are not applicable on blackout days.</li>
                 <li>ISD and premium services will be charged separately.</li>
             </ul>
-        </div>
-    `;
+        </div>`;
 
     document.querySelector('.btn-select-from-modal').setAttribute('data-plan-id', planId);
 }
 
-// Function to handle plan selection
+// Handle plan selection
 async function selectPlan(planId) {
     const plans = await fetchPlans();
     const plan = plans.find(p => p.id == planId);
-    window.location.href = `Recharge.html?amount=${plan.price}`;
+    const mobileNumber = document.getElementById('sidebarMobile').value;
+    window.location.href = `/src/pages/Payment.html?amount=${plan.price}&mobile=${mobileNumber}`;
 }
 
-// Filter functions
+// Apply filters
 async function applyFilters() {
     const plans = await fetchPlans();
     const priceRange = document.getElementById('priceRange').value;
     const validityFilter = document.getElementById('validityFilter').value;
     const dataFilter = document.getElementById('dataFilter').value;
-    const activeCategoryElement = document.querySelector('.sidebar-item.active, .category-pill.active');
-    const activeCategory = activeCategoryElement.getAttribute('data-category');
+    const activeCategory = document.querySelector('.sidebar-item.active, .category-pill.active').getAttribute('data-category');
 
     let filteredPlans = [...plans];
 
-    // Filter by category
     if (activeCategory !== 'all') {
         filteredPlans = filteredPlans.filter(plan => plan.categories && plan.categories.includes(activeCategory));
     }
 
-    // Filter by price
     if (priceRange !== 'all') {
         if (priceRange === '1000+') {
             filteredPlans = filteredPlans.filter(plan => plan.price >= 1000);
@@ -223,7 +213,6 @@ async function applyFilters() {
         }
     }
 
-    // Filter by validity
     if (validityFilter !== 'all') {
         if (validityFilter === '181+') {
             filteredPlans = filteredPlans.filter(plan => plan.validity >= 181);
@@ -233,10 +222,9 @@ async function applyFilters() {
         }
     }
 
-    // Filter by data
     if (dataFilter !== 'all') {
         function getDataValue(data) {
-            if (data.includes('Unlimited')) return 100; 
+            if (data.includes('Unlimited')) return 100;
             const match = data.match(/(\d+(\.\d+)?)GB/);
             return match ? parseFloat(match[1]) : 0;
         }
@@ -256,18 +244,96 @@ async function applyFilters() {
     displayPlans(filteredPlans);
 }
 
-// Initialize the page
+// Validate and update mobile number
+async function validateAndUpdateMobile() {
+    const mobileInput = document.getElementById('sidebarMobile');
+    const mobileError = document.getElementById('sidebarMobileError');
+    const mobileNumber = mobileInput.value.trim();
+
+    mobileError.style.display = 'none';
+    mobileInput.style.borderColor = '';
+
+    if (!mobileNumber) {
+        mobileError.textContent = 'Please enter a number';
+        mobileError.style.display = 'block';
+        mobileInput.style.borderColor = '#dc3545';
+        return false;
+    }
+    if (isNaN(mobileNumber) || !/^\d+$/.test(mobileNumber)) {
+        mobileError.textContent = 'Please enter a valid number';
+        mobileError.style.display = 'block';
+        mobileInput.style.borderColor = '#dc3545';
+        return false;
+    }
+    if (mobileNumber.length !== 10) {
+        mobileError.textContent = 'Please enter a valid 10-digit mobile number';
+        mobileError.style.display = 'block';
+        mobileInput.style.borderColor = '#dc3545';
+        return false;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/recharge`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('jwtToken') || ''}`
+            },
+            body: JSON.stringify({ mobileNumber })
+        });
+
+        if (response.ok) {
+            mobileInput.style.borderColor = '#28a745';
+            mobileError.textContent = 'Number updated successfully!';
+            mobileError.style.color = '#28a745';
+            mobileError.style.display = 'block';
+            mobileInput.setAttribute('readonly', true);
+            document.getElementById('changeNumberBtn').textContent = 'Change';
+            return true;
+        } else {
+            const errorText = await response.text();
+            mobileError.textContent = errorText || 'Failed to update number';
+            mobileError.style.display = 'block';
+            mobileInput.style.borderColor = '#dc3545';
+            return false;
+        }
+    } catch (error) {
+        mobileError.textContent = error.message || 'An error occurred';
+        mobileError.style.display = 'block';
+        mobileInput.style.borderColor = '#dc3545';
+        return false;
+    }
+}
+
+// Initialize page
 document.addEventListener('DOMContentLoaded', async function() {
-    // Fetch and display all plans initially
     const plans = await fetchPlans();
     displayPlans(plans);
 
-    // Set up event listeners for sidebar categories
+    // Get mobile number from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const mobileNumber = urlParams.get('mobile');
+    const mobileInput = document.getElementById('sidebarMobile');
+    if (mobileNumber) {
+        mobileInput.value = mobileNumber;
+    }
+
+    // Change number functionality
+    const changeBtn = document.getElementById('changeNumberBtn');
+    changeBtn.addEventListener('click', function() {
+        if (mobileInput.hasAttribute('readonly')) {
+            mobileInput.removeAttribute('readonly');
+            mobileInput.focus();
+            this.textContent = 'Save';
+        } else {
+            validateAndUpdateMobile();
+        }
+    });
+
+    // Category selection
     document.querySelectorAll('.sidebar-item, .category-pill').forEach(item => {
         item.addEventListener('click', function() {
-            document.querySelectorAll('.sidebar-item, .category-pill').forEach(el => {
-                el.classList.remove('active');
-            });
+            document.querySelectorAll('.sidebar-item, .category-pill').forEach(el => el.classList.remove('active'));
             this.classList.add('active');
             const category = this.getAttribute('data-category');
             if (this.classList.contains('sidebar-item')) {
@@ -279,54 +345,40 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     });
 
-    // Set up event listeners for filter buttons
+    // Filter buttons
     document.getElementById('applyFilters').addEventListener('click', applyFilters);
-
     document.getElementById('resetFilters').addEventListener('click', async function() {
         document.getElementById('priceRange').value = 'all';
         document.getElementById('validityFilter').value = 'all';
         document.getElementById('dataFilter').value = 'all';
-
-        document.querySelectorAll('.sidebar-item, .category-pill').forEach(el => {
-            el.classList.remove('active');
-        });
+        document.querySelectorAll('.sidebar-item, .category-pill').forEach(el => el.classList.remove('active'));
         document.querySelector('.sidebar-item[data-category="all"]').classList.add('active');
         document.querySelector('.category-pill[data-category="all"]').classList.add('active');
-
         const plans = await fetchPlans();
         displayPlans(plans);
     });
 
-    // Modal Select Plan button
+    // Modal select plan
     document.querySelector('.btn-select-from-modal').addEventListener('click', function() {
         const planId = this.getAttribute('data-plan-id');
         selectPlan(planId);
-        const modal = bootstrap.Modal.getInstance(document.getElementById('planDetailsModal'));
-        modal.hide();
+        bootstrap.Modal.getInstance(document.getElementById('planDetailsModal')).hide();
     });
 
-    // Scroll to top button functionality
+    // Scroll effects
     window.onscroll = function() {
-        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-            document.getElementById('scrollTopBtn').style.display = 'block';
-        } else {
-            document.getElementById('scrollTopBtn').style.display = 'none';
-        }
-    };
-
-    // Navbar scroll effect
-    window.addEventListener('scroll', function() {
+        const scrollBtn = document.getElementById('scrollTopBtn');
         const navbar = document.querySelector('.navbar');
-        if (window.scrollY > 10) {
+        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+            scrollBtn.style.display = 'block';
             navbar.classList.add('scrolled');
         } else {
+            scrollBtn.style.display = 'none';
             navbar.classList.remove('scrolled');
         }
-    });
+    };
 });
 
-// Scroll to top function
 function scrollToTop() {
-    document.body.scrollTop = 0;
-    document.documentElement.scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }

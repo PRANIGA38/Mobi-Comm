@@ -1,45 +1,38 @@
+// Show button when scrolling down
+window.onscroll = function () {
+    let scrollBtn = document.getElementById("scrollTopBtn");
+    if (scrollBtn) {
+        scrollBtn.style.display = (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) ? "block" : "none";
+    }
+};
 
+// Scroll to top function
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
-        // Show button when scrolling down
-        window.onscroll = function () {
-            let scrollBtn = document.getElementById("scrollTopBtn");
-            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-                scrollBtn.style.display = "block";
-            } else {
-                scrollBtn.style.display = "none";
-            }
-        };
+// Function to share receipt - defined outside window.onload for global scope
+function shareReceipt() {
+    const transactionId = document.getElementById('transactionId').textContent;
+    const amount = document.getElementById('amount').textContent;
+    const mobileNumber = document.getElementById('mobileNumber').textContent;
 
-        // Scroll to top function
-        function scrollToTop() {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-    
+    const shareText = `I've successfully recharged my Mobi-comm account with ${amount} for mobile number ${mobileNumber}. Transaction ID: ${transactionId}`;
 
-        // Function to share receipt - defined outside window.onload for global scope
-        function shareReceipt() {
-            // Create shareable content
-            const transactionId = document.getElementById('transactionId').textContent;
-            const amount = document.getElementById('amount').textContent;
+    if (navigator.share) {
+        navigator.share({
+            title: 'Mobi-comm Recharge Receipt',
+            text: shareText,
+        })
+        .catch(err => {
+            alert('Sharing failed. You can copy your transaction details manually.');
+        });
+    } else {
+        alert(`Share this information:\n\n${shareText}`);
+    }
+}
 
-            const shareText = `I've successfully recharged my Mobi-comm account with ${amount}. Transaction ID: ${transactionId}`;
-
-            // Check if Web Share API is available
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Mobi-comm Recharge Receipt',
-                    text: shareText,
-                })
-                    .catch(err => {
-                        alert('Sharing failed. You can copy your transaction ID manually.');
-                    });
-            } else {
-                // Fallback for browsers that don't support Web Share API
-                alert(`Share this information:\n\n${shareText}`);
-            }
-        }
-
-        window.onload = function() {
+window.onload = function() {
     // Utility functions
     const generateTransactionId = () => {
         return 'MBTXN' + Math.random().toString(36).substr(2, 9).toUpperCase();
@@ -60,13 +53,9 @@
 
     const getPaymentIcon = (method) => {
         const methodLower = method.toLowerCase();
-        if (methodLower.includes('upi')) {
-            return 'bi-phone';
-        } else if (methodLower.includes('net')) {
-            return 'bi-bank';
-        } else if (methodLower.includes('wallet')) {
-            return 'bi-wallet';
-        }
+        if (methodLower.includes('upi')) return 'bi-phone';
+        if (methodLower.includes('net')) return 'bi-bank';
+        if (methodLower.includes('wallet')) return 'bi-wallet';
         return 'bi-credit-card';
     };
 
@@ -78,7 +67,7 @@
 
     // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    
+
     // Set receipt details
     const setReceiptDetails = () => {
         // Amount
@@ -92,17 +81,9 @@
         document.getElementById('paymentMethod').innerHTML = 
             `<i class="${paymentIcon} me-1"></i> ${paymentMethod}`;
 
-        // Mobile Number - Check URL parameters first, then input field
-        const urlMobile = urlParams.get('mobile');
-        const inputMobile = document.querySelector('input[name="mobile"]')?.value;
-        const mobileNumber = urlMobile || inputMobile || '9876543210';
-        
-        // Set mobile number to both display and input field if it exists
+        // Mobile Number
+        const mobileNumber = urlParams.get('mobile') || '9876543210';
         document.getElementById('mobileNumber').textContent = mobileNumber;
-        const mobileInput = document.querySelector('input[name="mobile"]');
-        if (mobileInput) {
-            mobileInput.value = mobileNumber;
-        }
 
         // Transaction ID / Account Details
         const accountDetail = urlParams.get('accountDetail');
@@ -124,16 +105,7 @@
         });
     };
 
-    // Listen for mobile number input changes
-    const mobileInput = document.querySelector('input[name="mobile"]');
-    if (mobileInput) {
-        mobileInput.addEventListener('input', (e) => {
-            document.getElementById('mobileNumber').textContent = e.target.value || '9876543210';
-        });
-    }
-
     // Initialize receipt
     setReceiptDetails();
     animateElements();
 };
-    

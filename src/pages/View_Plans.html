@@ -77,7 +77,14 @@
             <!-- Sidebar -->
             <div class="col-lg-3 mb-4">
                 <div class="sidebar">
-                    <h4 class="sidebar-title">Plan Categories</h4>
+                    <h4 class="sidebar-title">Mobile Number</h4>
+                    <div class="mobile-number-section">
+                        <input type="text" id="sidebarMobile" class="form-control" placeholder="Enter mobile number" readonly>
+                        <button id="changeNumberBtn" class="btn btn-outline-primary mt-2">Change</button>
+                        <small id="sidebarMobileError" style="color: red; display: none;"></small>
+                    </div>
+                    
+                    <h4 class="sidebar-title mt-4">Plan Categories</h4>
                     <div class="sidebar-nav">
                         <div class="sidebar-item active" data-category="all">
                             <i class="bi bi-grid sidebar-icon"></i> All Plans
