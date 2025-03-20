@@ -126,7 +126,7 @@
         
         // Demo button actions with toast notifications
         document.getElementById('rechargeBtn').addEventListener('click', function() {
-            window.location.href = 'Recharge.html';
+            window.location.href = 'MobilePrepaid.html';
         });
         
         document.getElementById('changePlanBtn').addEventListener('click', function() {
