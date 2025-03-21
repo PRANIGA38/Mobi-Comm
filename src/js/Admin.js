@@ -1,3 +1,23 @@
+document.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        showPopup('Please log in to access this page.', false);
+        setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+        return;
+    }
+    // Verify the token by making a simple request
+    try {
+        await fetchWithAuth('http://localhost:8083/api/admin/plans', { method: 'GET' }, true);
+        // Proceed with loading the page
+        fetchPlans();
+        fetchSubscribers();
+        fetchCategories();
+    } catch (error) {
+        showPopup('Access denied: ' + error.message, false);
+        setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+    }
+});
+
 const API_BASE_URL = 'http://localhost:8083/api';
 let jwtToken = localStorage.getItem('jwtToken');
 
@@ -207,18 +227,16 @@ function renderPlanCategoryCheckboxes() {
     });
 }
 
-// Fetch plans by category
 async function fetchPlans(category = 'all') {
     try {
         const url = category === 'all' ? `${API_BASE_URL}/admin/plans` : `${API_BASE_URL}/admin/plans?category=${category}`;
-        const response = await fetchWithAuth(url);
+        const response = await fetchWithAuth(url, { method: 'GET' }, true);
         allPlans = await response.json();
         currentPage = 1;
         displayPlansWithPagination();
     } catch (error) {
         console.error('Error fetching plans:', error);
         plansTable.innerHTML = `<tr><td colspan="8" class="text-center py-3">Error loading plans</td></tr>`;
-        paginationControls.innerHTML = '';
     }
 }
 

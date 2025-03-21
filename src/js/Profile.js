@@ -1,4 +1,22 @@
+document.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        showPopup('Please log in to access this page.', false);
+        setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+        return;
+    }
 
+    try {
+        const response = await fetchWithAuth('http://localhost:8083/api/users/profile', { method: 'GET' }, true);
+        const user = await response.json();
+        // Display user profile
+        document.getElementById('user-name').textContent = user.name;
+        document.getElementById('user-email').textContent = user.email;
+    } catch (error) {
+        showPopup('Access denied: ' + error.message, false);
+        setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+    }
+});
 
         // Show success message on page load
         window.onload = function() {

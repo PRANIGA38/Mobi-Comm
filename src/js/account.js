@@ -1,6 +1,43 @@
 const OTP_EXPIRY_TIME = 60; // seconds
 let otpExpiryTimer = null;
 
+// Fetch utility with authentication
+async function fetchWithAuth(url, options = {}, requiresAuth = true) {
+    const token = localStorage.getItem('jwtToken');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    if (requiresAuth && token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('jwtToken');
+            showPopup('Session expired. Please log in again.', false);
+            setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+            throw new Error('Unauthorized');
+        }
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `HTTP error! Status: ${response.status}`);
+        }
+
+        return response;
+    } catch (error) {
+        console.error(`Fetch error for ${url}:`, error.message);
+        throw error;
+    }
+}
+
 function showForm(type) {
     const mobileLogin = document.getElementById('mobileLogin');
     const adminLogin = document.getElementById('adminLogin');
@@ -143,15 +180,18 @@ document.getElementById('adminForm').addEventListener('submit', async function (
     if (!username || !password) return;
 
     const button = this.querySelector('button[type="submit"]');
+    if (button.disabled) return; // Prevent multiple submissions
     button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
     button.disabled = true;
 
     try {
+        // Clear any existing token before login
+        localStorage.removeItem('jwtToken');
+
         const response = await fetch('http://localhost:8083/api/auth/admin-login', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('jwtToken') || ''}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ username, password })
         });
@@ -159,6 +199,7 @@ document.getElementById('adminForm').addEventListener('submit', async function (
         if (!response.ok) throw new Error(await response.text() || 'Invalid credentials');
 
         const token = await response.text();
+        console.log('JWT Token:', token);
         localStorage.setItem('jwtToken', token);
         await checkAdminRole(token);
     } catch (error) {
@@ -169,35 +210,35 @@ document.getElementById('adminForm').addEventListener('submit', async function (
     }
 });
 
+// Update checkUserRole to use fetchWithAuth
 async function checkUserRole(token) {
     try {
-        const response = await fetch('http://localhost:8083/api/users/profile', { // Fixed endpoint typo
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await fetchWithAuth('http://localhost:8083/api/users/profile', {
+            method: 'GET'
+        }, true); // Auth required
+
         if (response.ok) {
             showPopup('Login successful! Redirecting to profile...', true);
             setTimeout(() => window.location.href = '/src/pages/profile.html', 1000);
-        } else {
-            throw new Error('Unauthorized');
         }
     } catch (error) {
-        showPopup('Access denied', false);
+        showPopup('Access denied: ' + error.message, false);
     }
 }
 
+// Update checkAdminRole to use fetchWithAuth
 async function checkAdminRole(token) {
     try {
-        const response = await fetch('http://localhost:8083/api/admin/plans', { // Changed to a valid admin endpoint
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await fetchWithAuth('http://localhost:8083/api/admin/plans', {
+            method: 'GET'
+        }, true); // Auth required
+
         if (response.ok) {
             showPopup('Login successful! Redirecting to admin...', true);
             setTimeout(() => window.location.href = '/src/pages/admin.html', 1000);
-        } else {
-            throw new Error('Unauthorized');
         }
     } catch (error) {
-        showPopup('Access denied', false);
+        showPopup('Access denied: ' + error.message, false);
     }
 }
 
