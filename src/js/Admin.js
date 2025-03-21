@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('jwtToken');
     if (!token) {
@@ -19,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 const API_BASE_URL = 'http://localhost:8083/api';
-let jwtToken = localStorage.getItem('jwtToken');
+var jwtToken = localStorage.getItem('jwtToken');
 
 // DOM Elements
 const expiringSubscribersTable = document.getElementById('expiring-subscribers');
