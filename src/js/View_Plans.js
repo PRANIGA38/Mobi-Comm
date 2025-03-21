@@ -14,98 +14,27 @@ async function fetchPlans() {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const plans = await response.json();
-        return plans;
+        // Ensure categories are properly formatted
+        return plans.map(plan => ({
+            ...plan,
+            categories: plan.categories ? plan.categories.map(cat => cat.name.toLowerCase()) : []
+        }));
     } catch (error) {
         console.error('Error fetching plans:', error);
         return [];
     }
 }
-
-// Function to display plans
-function displayPlans(filteredPlans) {
-    const plansContainer = document.getElementById('plansContainer');
-    plansContainer.innerHTML = '';
-
-    if (filteredPlans.length === 0) {
-        plansContainer.innerHTML = `
-            <div class="no-plans-message">
-                <i class="bi bi-exclamation-circle" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 20px;"></i>
-                <h4>No plans match your current filters</h4>
-                <p>Try adjusting your filters or reset them to see all available plans.</p>
-            </div>`;
-        return;
-    }
-
-    filteredPlans.forEach(plan => {
-        const planCard = document.createElement('div');
-        planCard.className = 'plan-card';
-        planCard.setAttribute('data-plan-id', plan.id);
-
-        const mainCategory = plan.categories && plan.categories.length > 0 ? plan.categories[0] : 'all';
-        let categoryName = mainCategory.charAt(0).toUpperCase() + mainCategory.slice(1);
-
-        planCard.innerHTML = `
-            ${plan.isHotDeal ? '<div class="hot-deal">HOT DEAL</div>' : ''}
-            <div class="plan-category-badge">${categoryName}</div>
-            <div class="plan-header">
-                <h3 class="plan-title">₹${plan.price}</h3>
-                <p class="plan-validity">Validity: ${plan.validity} Days</p>
-            </div>
-            <div class="plan-body">
-                <div class="plan-features">
-                    <div class="plan-feature-item">
-                        <i class="bi bi-wifi feature-icon"></i>
-                        <span>${plan.data}GB${plan.data.includes('/Day') ? '' : '/Day'}</span>
-                    </div>
-                    <div class="plan-feature-item">
-                        <i class="bi bi-chat-dots feature-icon"></i>
-                        <span>${plan.sms || 'N/A'}</span>
-                    </div>
-                    <div class="plan-feature-item">
-                        <i class="bi bi-telephone feature-icon"></i>
-                        <span>${plan.calls || 'N/A'}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="plan-footer">
-                <div class="price-section">
-                    ${plan.isHotDeal ? 
-                        `<div class="discounted-price">
-                            <span class="original-price">₹${plan.originalPrice}</span>
-                            <span class="current-price">₹${plan.price}</span>
-                        </div>` : 
-                        `<span class="current-price">₹${plan.price}</span>`
-                    }
-                </div>
-                <button class="btn-select-plan">Select Plan</button>
-                <button class="btn-plan-details" data-bs-toggle="modal" data-bs-target="#planDetailsModal" data-plan-id="${plan.id}">View Details</button>
-            </div>`;
-
-        plansContainer.appendChild(planCard);
-    });
-
-    document.querySelectorAll('.btn-plan-details').forEach(button => {
-        button.addEventListener('click', function() {
-            const planId = this.getAttribute('data-plan-id');
-            showPlanDetails(planId);
-        });
-    });
-
-    document.querySelectorAll('.btn-select-plan').forEach(button => {
-        button.addEventListener('click', function() {
-            const planCard = this.closest('.plan-card');
-            const planId = planCard.getAttribute('data-plan-id');
-            selectPlan(planId);
-        });
-    });
-}
-
 // Show plan details in modal
 async function showPlanDetails(planId) {
     const plans = await fetchPlans();
     const plan = plans.find(p => p.id == planId);
     const modalBody = document.getElementById('planDetailsModalBody');
     const modalTitle = document.getElementById('planDetailsModalLabel');
+
+    if (!plan) {
+        modalBody.innerHTML = '<p>Error: Plan not found.</p>';
+        return;
+    }
 
     modalTitle.textContent = `Plan Details - ₹${plan.price}`;
     modalBody.innerHTML = `
@@ -150,13 +79,14 @@ async function showPlanDetails(planId) {
                 <div class="modal-benefit-item">
                     <i class="bi bi-gift benefit-icon"></i>
                     <div class="benefit-text">
-                        ${plan.benefits || 'No additional benefits'}
+                        ${plan.benefits && plan.benefits.trim() !== '' ? plan.benefits : 'No additional benefits available.'}
                     </div>
                 </div>
                 <div class="modal-benefit-item">
                     <i class="bi bi-tags benefit-icon"></i>
                     <div class="benefit-text">
-                        <strong>Categories:</strong> ${plan.categories ? plan.categories.map(cat => cat.charAt(0).toUpperCase() + cat.slice(1)).join(', ') : 'N/A'}
+                        <strong>Categories:</strong> ${plan.categories && plan.categories.length > 0 ? 
+                            plan.categories.map(cat => cat.charAt(0).toUpperCase() + cat.slice(1)).join(', ') : 'N/A'}
                     </div>
                 </div>
                 ${plan.isHotDeal ? `
@@ -182,8 +112,86 @@ async function showPlanDetails(planId) {
 
     document.querySelector('.btn-select-from-modal').setAttribute('data-plan-id', planId);
 }
+function displayPlans(filteredPlans) {
+    const plansContainer = document.getElementById('plansContainer');
+    plansContainer.innerHTML = '';
 
-// Handle plan selection
+    if (filteredPlans.length === 0) {
+        plansContainer.innerHTML = `
+            <div class="no-plans-message">
+                <i class="bi bi-exclamation-circle" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 20px;"></i>
+                <h4>No plans match your current filters</h4>
+                <p>Try adjusting your filters or reset them to see all available plans.</p>
+            </div>`;
+        return;
+    }
+
+    filteredPlans.forEach(plan => {
+        const planCard = document.createElement('div');
+        planCard.className = 'plan-card';
+        planCard.setAttribute('data-plan-id', plan.id);
+
+        // Use the first category for the badge, or default to 'all'
+        const mainCategory = plan.categories && plan.categories.length > 0 ? plan.categories[0] : 'all';
+        let categoryName = mainCategory.charAt(0).toUpperCase() + mainCategory.slice(1);
+
+        planCard.innerHTML = `
+            ${plan.isHotDeal ? '<div class="hot-deal">HOT DEAL</div>' : ''}
+            <div class="plan-category-badge">${categoryName}</div>
+            <div class="plan-header">
+                <h3 class="plan-title">₹${plan.price}</h3>
+                <p class="plan-validity">Validity: ${plan.validity} Days</p>
+            </div>
+            <div class="plan-body">
+                <div class="plan-features">
+                    <div class="plan-feature-item">
+                        <i class="bi bi-wifi feature-icon"></i>
+                        <span>${plan.data}GB${plan.data.includes('/Day') ? '' : '/Day'}</span>
+                    </div>
+                    <div class="plan-feature-item">
+                        <i class="bi bi-chat-dots feature-icon"></i>
+                        <span>${plan.sms || 'N/A'}</span>
+                    </div>
+                    <div class="plan-feature-item">
+                        <i class="bi bi-telephone feature-icon"></i>
+                        <span>${plan.calls || 'N/A'}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="plan-footer">
+                <div class="price-section">
+                    ${plan.isHotDeal ? 
+                        `<div class="discounted-price">
+                            <span class="original-price">₹${plan.originalPrice}</span>
+                            <span class="current-price">₹${plan.price}</span>
+                        </div>` : 
+                        `<span class="current-price">₹${plan.price}</span>`
+                    }
+                </div>
+                <button class="btn-select-plan">Select Plan</button>
+                <button class="btn-plan-details" data-bs-toggle="modal" data-bs-target="#planDetailsModal" data-plan-id="${plan.id}">View Details</button>
+            </div>`;
+
+        plansContainer.appendChild(planCard);
+    });
+
+    // Re-attach event listeners for buttons
+    document.querySelectorAll('.btn-plan-details').forEach(button => {
+        button.addEventListener('click', function() {
+            const planId = this.getAttribute('data-plan-id');
+            showPlanDetails(planId);
+        });
+    });
+
+    document.querySelectorAll('.btn-select-plan').forEach(button => {
+        button.addEventListener('click', function() {
+            const planCard = this.closest('.plan-card');
+            const planId = planCard.getAttribute('data-plan-id');
+            selectPlan(planId);
+        });
+    });
+}
+
 async function selectPlan(planId) {
     const plans = await fetchPlans();
     const plan = plans.find(p => p.id == planId);
@@ -196,15 +204,108 @@ async function selectPlan(planId) {
         mobileError.textContent = 'Please enter a mobile number';
         mobileError.style.display = 'block';
         mobileInput.style.borderColor = '#dc3545';
-        mobileInput.focus(); // Focus on the input field to prompt user
-        return; // Stop execution if mobile number is missing
+        mobileInput.focus();
+        return;
     }
 
-    // If mobile number exists, proceed to payment page
-    window.location.href = `/src/pages/Payment.html?amount=${plan.price}&mobile=${mobileNumber}`;
+    // Validate mobile number
+    if (isNaN(mobileNumber) || !/^\d+$/.test(mobileNumber) || mobileNumber.length !== 10) {
+        mobileError.textContent = 'Please enter a valid 10-digit mobile number';
+        mobileError.style.display = 'block';
+        mobileInput.style.borderColor = '#dc3545';
+        mobileInput.focus();
+        return;
+    }
+
+    // If mobile number is valid, proceed to payment page
+    window.location.href = `/src/pages/Payment.html?amount=${plan.price}&mobile=${mobileNumber}&planId=${planId}`;
+}
+// Fetch categories from the backend
+async function fetchCategories() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/public/categories`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const categories = await response.json();
+        return categories.map(cat => cat.name.toLowerCase());
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        const sidebarNav = document.querySelector('.sidebar-nav');
+        sidebarNav.innerHTML += `
+            <div class="text-danger" style="padding: 10px;">
+                Failed to load categories. Please try again later.
+            </div>`;
+        return [];
+    }
 }
 
-// Apply filters
+// Dynamically populate categories in the sidebar and pills
+async function populateCategories() {
+    const categories = await fetchCategories();
+    const sidebarNav = document.querySelector('.sidebar-nav');
+    const categoryPills = document.querySelector('.category-pills');
+
+    // Clear existing categories (except "All Plans")
+    sidebarNav.innerHTML = `
+        <div class="sidebar-item active" data-category="all">
+            <i class="bi bi-grid sidebar-icon"></i> All Plans
+        </div>`;
+    categoryPills.innerHTML = `
+        <div class="category-pill active" data-category="all">All Plans</div>`;
+
+    // Define icons for each category
+    const categoryIcons = {
+        'popular': 'bi-award',
+        'validity': 'bi-hourglass-bottom',
+        'data': 'bi-file-bar-graph',
+        'unlimited': 'bi-infinity',
+        'entertainment': 'bi-film',
+        'international': 'bi-globe',
+        'budget': 'bi-piggy-bank'
+    };
+
+    // Add dynamic categories
+    categories.forEach(category => {
+        const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+        const iconClass = categoryIcons[category] || 'bi-tag';
+
+        // Add to sidebar
+        const sidebarItem = document.createElement('div');
+        sidebarItem.className = 'sidebar-item';
+        sidebarItem.setAttribute('data-category', category);
+        sidebarItem.innerHTML = `
+            <i class="bi ${iconClass} sidebar-icon"></i> ${categoryName} Plans`;
+        sidebarNav.appendChild(sidebarItem);
+
+        // Add to category pills
+        const categoryPill = document.createElement('div');
+        categoryPill.className = 'category-pill';
+        categoryPill.setAttribute('data-category', category);
+        categoryPill.textContent = categoryName;
+        categoryPills.appendChild(categoryPill);
+    });
+
+    // Re-attach event listeners for category selection
+    document.querySelectorAll('.sidebar-item, .category-pill').forEach(item => {
+        item.addEventListener('click', function() {
+            document.querySelectorAll('.sidebar-item, .category-pill').forEach(el => el.classList.remove('active'));
+            this.classList.add('active');
+            const category = this.getAttribute('data-category');
+            if (this.classList.contains('sidebar-item')) {
+                document.querySelector(`.category-pill[data-category="${category}"]`).classList.add('active');
+            } else {
+                document.querySelector(`.sidebar-item[data-category="${category}"]`).classList.add('active');
+            }
+            applyFilters();
+        });
+    });
+}
 async function applyFilters() {
     const plans = await fetchPlans();
     const priceRange = document.getElementById('priceRange').value;
@@ -214,10 +315,12 @@ async function applyFilters() {
 
     let filteredPlans = [...plans];
 
+    // Filter by category
     if (activeCategory !== 'all') {
         filteredPlans = filteredPlans.filter(plan => plan.categories && plan.categories.includes(activeCategory));
     }
 
+    // Filter by price range
     if (priceRange !== 'all') {
         if (priceRange === '1000+') {
             filteredPlans = filteredPlans.filter(plan => plan.price >= 1000);
@@ -227,6 +330,7 @@ async function applyFilters() {
         }
     }
 
+    // Filter by validity
     if (validityFilter !== 'all') {
         if (validityFilter === '181+') {
             filteredPlans = filteredPlans.filter(plan => plan.validity >= 181);
@@ -236,6 +340,7 @@ async function applyFilters() {
         }
     }
 
+    // Filter by data allowance
     if (dataFilter !== 'all') {
         function getDataValue(data) {
             if (data.includes('Unlimited')) return 100;
@@ -258,7 +363,6 @@ async function applyFilters() {
     displayPlans(filteredPlans);
 }
 
-// Validate and update mobile number
 async function validateAndUpdateMobile() {
     const mobileInput = document.getElementById('sidebarMobile');
     const mobileError = document.getElementById('sidebarMobileError');
@@ -267,6 +371,7 @@ async function validateAndUpdateMobile() {
     mobileError.style.display = 'none';
     mobileInput.style.borderColor = '';
 
+    // Validate mobile number
     if (!mobileNumber) {
         mobileError.textContent = 'Please enter a number';
         mobileError.style.display = 'block';
@@ -303,6 +408,8 @@ async function validateAndUpdateMobile() {
             mobileError.style.display = 'block';
             mobileInput.setAttribute('readonly', true);
             document.getElementById('changeNumberBtn').textContent = 'Change';
+            // Store the mobile number in localStorage for persistence
+            localStorage.setItem('rechargeMobileNumber', mobileNumber);
             return true;
         } else {
             const errorText = await response.text();
@@ -319,17 +426,19 @@ async function validateAndUpdateMobile() {
     }
 }
 
-// Initialize page
 document.addEventListener('DOMContentLoaded', async function() {
     const plans = await fetchPlans();
     displayPlans(plans);
-
-    // Get mobile number from URL
+    await populateCategories();
+    // Get mobile number from URL or localStorage
     const urlParams = new URLSearchParams(window.location.search);
-    const mobileNumber = urlParams.get('mobile');
+    let mobileNumber = urlParams.get('mobile') || localStorage.getItem('rechargeMobileNumber');
     const mobileInput = document.getElementById('sidebarMobile');
+
     if (mobileNumber) {
         mobileInput.value = mobileNumber;
+        mobileInput.setAttribute('readonly', true);
+        document.getElementById('changeNumberBtn').textContent = 'Change';
     }
 
     // Change number functionality
@@ -343,7 +452,35 @@ document.addEventListener('DOMContentLoaded', async function() {
             validateAndUpdateMobile();
         }
     });
-
+// Filter buttons
+document.getElementById('applyFilters').addEventListener('click', applyFilters);
+document.getElementById('resetFilters').addEventListener('click', async function() {
+    document.getElementById('priceRange').value = 'all';
+    document.getElementById('validityFilter').value = 'all';
+    document.getElementById('dataFilter').value = 'all';
+    document.querySelectorAll('.sidebar-item, .category-pill').forEach(el => el.classList.remove('active'));
+    document.querySelector('.sidebar-item[data-category="all"]').classList.add('active');
+    document.querySelector('.category-pill[data-category="all"]').classList.add('active');
+    const plans = await fetchPlans();
+    displayPlans(plans);
+});
+// Modal select plan
+document.querySelector('.btn-select-from-modal').addEventListener('click', function() {
+    const planId = this.getAttribute('data-plan-id');
+    selectPlan(planId);
+    bootstrap.Modal.getInstance(document.getElementById('planDetailsModal')).hide();
+});
+window.onscroll = function() {
+    const scrollBtn = document.getElementById('scrollTopBtn');
+    const navbar = document.querySelector('.navbar');
+    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+        scrollBtn.style.display = 'block';
+        navbar.classList.add('scrolled');
+    } else {
+        scrollBtn.style.display = 'none';
+        navbar.classList.remove('scrolled');
+    }
+};
     // Category selection
     document.querySelectorAll('.sidebar-item, .category-pill').forEach(item => {
         item.addEventListener('click', function() {
