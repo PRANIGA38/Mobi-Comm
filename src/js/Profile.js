@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         confirmLogoutBtn.onclick = function() {
-            window.location.href = 'Login.html';
+            window.location.href = '/src/pages/account.html';
         }
         
         window.onclick = function(event) {
