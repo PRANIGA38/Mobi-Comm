@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('jwtToken');
     if (!token) {
@@ -6,10 +5,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
         return;
     }
-    // Verify the token by making a simple request
     try {
         await fetchWithAuth('http://localhost:8083/api/admin/plans', { method: 'GET' }, true);
-        // Proceed with loading the page
         fetchPlans();
         fetchSubscribers();
         fetchCategories();
@@ -104,11 +101,11 @@ async function fetchDashboardStats() {
 // Fetch and display expiring subscribers
 async function fetchExpiringSubscribers(searchTerm = '') {
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/admin/subscribers`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/subscribers/expiring-soon`);
         const subscribers = await response.json();
         displayExpiringSubscribers(subscribers, searchTerm);
     } catch (error) {
-        console.error('Error fetching subscribers:', error);
+        console.error('Error fetching expiring subscribers:', error);
         expiringSubscribersTable.innerHTML = `<tr><td colspan="6" class="text-center py-3">Error loading subscribers</td></tr>`;
     }
 }
@@ -119,11 +116,11 @@ function displayExpiringSubscribers(subscribers, searchTerm = '') {
         !searchTerm ||
         subscriber.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (subscriber.email && subscriber.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        subscriber.phone.includes(searchTerm)
+        subscriber.mobileNumber.includes(searchTerm)
     );
 
     if (filteredSubscribers.length === 0) {
-        expiringSubscribersTable.innerHTML = `<tr><td colspan="6" class="text-center py-3">No matching subscribers found</td></tr>`;
+        expiringSubscribersTable.innerHTML = `<tr><td colspan="6" class="text-center py-3">No subscribers with expiring plans found</td></tr>`;
         return;
     }
 
@@ -132,17 +129,17 @@ function displayExpiringSubscribers(subscribers, searchTerm = '') {
         row.innerHTML = `
             <td>
                 <div class="d-flex align-items-center">
-                    <img src="${subscriber.avatar || '/src/assets/images/default-avatar.png'}" alt="${subscriber.name}" class="rounded-circle me-2" style="width: 40px; height: 40px;">
+                    <img src="${subscriber.avatar || '/src/assets/icons/users.png'}" alt="${subscriber.name}" class="rounded-circle me-2" style="width: 40px; height: 40px;">
                     <div>
                         <div class="fw-medium">${subscriber.name}</div>
                         <div class="small text-muted">${subscriber.email || 'N/A'}</div>
                     </div>
                 </div>
             </td>
-            <td>${subscriber.phone}</td>
+            <td>${subscriber.mobileNumber}</td>
             <td>${subscriber.currentPlan || 'N/A'}</td>
-            <td>${formatDate(subscriber.expiry)}</td>
-            <td><span class="status status-expiring">Expiring in ${getDaysUntil(subscriber.expiry)} days</span></td>
+            <td>${formatDate(subscriber.planExpiryDate)}</td>
+            <td><span class="status status-expiring">Expiring in ${getDaysUntil(subscriber.planExpiryDate)} days</span></td>
             <td><button class="btn btn-sm btn-view view-user" data-id="${subscriber.id}">View</button></td>
         `;
         expiringSubscribersTable.appendChild(row);
@@ -201,7 +198,6 @@ function renderCategoryFilters() {
         categoryButtonsContainer.appendChild(button);
     });
 
-    // Re-attach event listeners
     document.querySelectorAll('.category-btn').forEach(button => {
         button.addEventListener('click', () => {
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
@@ -334,18 +330,51 @@ function handleSearch() {
 // Open user details modal
 async function openUserModal(userId) {
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/admin/subscribers/${userId}`);
-        const user = await response.json();
-        document.getElementById('modal-user-avatar').src = user.avatar || '/src/assets/images/default-avatar.png';
+        const subscriberResponse = await fetchWithAuth(`${API_BASE_URL}/admin/subscribers/${userId}`);
+        const user = await subscriberResponse.json();
+
+        const historyResponse = await fetchWithAuth(`${API_BASE_URL}/admin/subscribers/${userId}/recharge-history`);
+        const rechargeHistory = await historyResponse.json();
+
+        document.getElementById('modal-user-avatar').src = user.avatar || '/src/assets/icons/users.png';
         document.getElementById('modal-user-name').textContent = user.name;
-        document.getElementById('modal-user-phone').textContent = user.phone;
+        document.getElementById('modal-user-phone').textContent = user.mobileNumber;
         document.getElementById('modal-user-email').textContent = user.email || 'N/A';
         document.getElementById('modal-user-address').textContent = user.address || 'N/A';
-        document.getElementById('recharge-history-table').innerHTML = `
-            <tr><td colspan="5" class="text-center py-3">Recharge history not implemented</td></tr>`;
+
+        const rechargeHistoryTable = document.getElementById('recharge-history-table');
+        rechargeHistoryTable.innerHTML = '';
+        const limitedHistory = rechargeHistory.slice(0, 4);
+
+        if (limitedHistory.length === 0) {
+            rechargeHistoryTable.innerHTML = `<tr><td colspan="5" class="text-center py-3">No recharge history available</td></tr>`;
+        } else {
+            limitedHistory.forEach(record => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(record.rechargeDate)}</td>
+                    <td>${record.planName}</td>
+                    <td>₹${record.amount.toFixed(2)}</td>
+                    <td>${record.paymentMode}</td>
+                    <td>${record.status}</td>
+                `;
+                rechargeHistoryTable.appendChild(row);
+            });
+
+            if (rechargeHistory.length > 4) {
+                const viewAllRow = document.createElement('tr');
+                viewAllRow.innerHTML = `
+                    <td colspan="5" class="text-center">
+                        <a href="/src/pages/subscribers.html?userId=${userId}" class="btn btn-sm btn-primary">View All (${rechargeHistory.length} entries)</a>
+                    </td>
+                `;
+                rechargeHistoryTable.appendChild(viewAllRow);
+            }
+        }
+
         userModalInstance.show();
     } catch (error) {
-        console.error('Error fetching subscriber:', error);
+        console.error('Error fetching subscriber or recharge history:', error);
         alert('Failed to load subscriber details');
     }
 }

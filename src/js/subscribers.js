@@ -9,6 +9,7 @@ const statusFilter = document.getElementById('statusFilter');
 const addSubscriberForm = document.getElementById('addSubscriberForm');
 const sidebarToggle = document.getElementById('sidebarToggle');
 const mobileSidebar = document.querySelector('.sidebar');
+const rechargeHistoryTable = document.getElementById('subscriber-recharge-history-table');
 
 // Pagination settings
 const itemsPerPage = 10;
@@ -30,9 +31,10 @@ async function fetchWithAuth(url, options = {}) {
     };
     console.log('Request URL:', url, 'Options:', options); 
     const response = await fetch(url, options);
-    if (response.status === 401) {
-        console.error('Unauthorized - Redirecting to login');
+    if (response.status === 401 || response.status === 403) {
+        console.error('Unauthorized or Forbidden - Redirecting to login');
         localStorage.removeItem('jwtToken');
+        alert('Access denied. Please log in as an admin.');
         window.location.href = '/src/pages/account.html';
         return;
     }
@@ -44,14 +46,21 @@ async function fetchWithAuth(url, options = {}) {
     return response.json();
 }
 
-// Fetch and render subscribers
+// Fetch and render subscribers (users)
 async function fetchSubscribers() {
     try {
-        allSubscribers = await fetchWithAuth('http://localhost:8083/api/admin/subscribers'); 
+        allSubscribers = await fetchWithAuth(API_BASE_URL); 
         filterSubscribers();
+
+        // Check for userId in URL and open details modal if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId');
+        if (userId) {
+            openSubscriberDetails(parseInt(userId));
+        }
     } catch (error) {
         console.error('Error fetching subscribers:', error);
-        subscribersList.innerHTML = '<tr><td colspan="7" class="text-center">Error loading subscribers</td></tr>';
+        subscribersList.innerHTML = '<tr><td colspan="6" class="text-center">Error loading subscribers</td></tr>';
     }
 }
 
@@ -64,7 +73,8 @@ function renderSubscribers() {
 
     const filteredSubscribers = allSubscribers.filter(subscriber =>
         (subscriber.name.toLowerCase().includes(searchTerm) ||
-         subscriber.email.toLowerCase().includes(searchTerm)) &&
+         (subscriber.email && subscriber.email.toLowerCase().includes(searchTerm)) ||
+         subscriber.mobileNumber.includes(searchTerm)) &&
         (statusValue === '' || subscriber.status === statusValue)
     );
 
@@ -73,29 +83,33 @@ function renderSubscribers() {
     const endIndex = startIndex + itemsPerPage;
     const paginatedSubscribers = filteredSubscribers.slice(startIndex, endIndex);
 
+    if (paginatedSubscribers.length === 0) {
+        subscribersList.innerHTML = '<tr><td colspan="6" class="text-center">No subscribers found</td></tr>';
+        return;
+    }
+
     paginatedSubscribers.forEach(subscriber => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${subscriber.id}</td>
             <td>${subscriber.name}</td>
-            <td>${subscriber.email}</td>
-            <td>${subscriber.phone}</td>
-            <td>${subscriber.plan}</td>
+            <td>${subscriber.email || 'N/A'}</td>
+            <td>${subscriber.mobileNumber}</td>
             <td>${subscriber.status}</td>
             <td>
-                <button class="btn" onclick="openSubscriberDetails(${subscriber.id})">View</button>
-                <button class="btn btn-secondary" onclick="toggleSubscriberStatus(${subscriber.id})">${subscriber.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
-                <button class="btn btn-danger" onclick="deleteSubscriber(${subscriber.id})">Delete</button>
+                <button class="btn btn-primary btn-sm" onclick="openSubscriberDetails(${subscriber.id})">View</button>
+                <button class="btn btn-secondary btn-sm" onclick="toggleSubscriberStatus(${subscriber.id})">${subscriber.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteSubscriber(${subscriber.id})">Delete</button>
             </td>
         `;
         subscribersList.appendChild(row);
     });
 
+    // Render pagination controls
     for (let i = 1; i <= totalPages; i++) {
         const pageBtn = document.createElement('button');
         pageBtn.textContent = i;
-        pageBtn.classList.add('btn');
-        if (i === currentPage) pageBtn.classList.add('btn-secondary');
+        pageBtn.classList.add('btn', i === currentPage ? 'btn-primary' : 'btn-outline-primary', 'mx-1');
         pageBtn.onclick = () => {
             currentPage = i;
             renderSubscribers();
@@ -122,26 +136,52 @@ function closeAddSubscriberModal() {
 
 async function openSubscriberDetails(id) {
     try {
-        const subscriber = await fetchWithAuth(`http://localhost:8083/api/admin/subscribers/${id}`); 
+        // Fetch subscriber details
+        const subscriber = await fetchWithAuth(`${API_BASE_URL}/${id}`); 
         const detailsContent = document.getElementById('subscriberDetailsContent');
         detailsContent.innerHTML = `
             <p><strong>Name:</strong> ${subscriber.name}</p>
-            <p><strong>Email:</strong> ${subscriber.email}</p>
-            <p><strong>Phone:</strong> ${subscriber.phone}</p>
-            <p><strong>Plan:</strong> ${subscriber.plan}</p>
+            <p><strong>Email:</strong> ${subscriber.email || 'N/A'}</p>
+            <p><strong>Phone:</strong> ${subscriber.mobileNumber}</p>
             <p><strong>Status:</strong> ${subscriber.status}</p>
-            <p><strong>Registration Date:</strong> ${new Date(subscriber.registrationDate).toLocaleString()}</p>
-            <p><strong>Expiration Date:</strong> ${new Date(subscriber.expirationDate).toLocaleString()}</p>
+            <p><strong>Join Date:</strong> ${subscriber.joinDate ? new Date(subscriber.joinDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</p>
+            <p><strong>Membership Status:</strong> ${subscriber.membershipStatus || 'N/A'}</p>
+            <p><strong>Alternative Phone:</strong> ${subscriber.alternativeMobileNumber || 'N/A'}</p>
+            <p><strong>Address:</strong> ${subscriber.address || 'N/A'}</p>
         `;
+
+        // Fetch and display recharge history
+        const rechargeHistory = await fetchWithAuth(`${API_BASE_URL}/${id}/recharge-history`);
+        rechargeHistoryTable.innerHTML = '';
+        if (rechargeHistory.length === 0) {
+            rechargeHistoryTable.innerHTML = `<tr><td colspan="5" class="text-center py-3">No recharge history available</td></tr>`;
+        } else {
+            rechargeHistory.forEach(record => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(record.rechargeDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                    <td>${record.planName}</td>
+                    <td>₹${record.amount.toFixed(2)}</td>
+                    <td>${record.paymentMode}</td>
+                    <td>${record.status}</td>
+                `;
+                rechargeHistoryTable.appendChild(row);
+            });
+        }
+
         document.getElementById('subscriberDetailsModal').style.display = 'block';
     } catch (error) {
-        console.error('Error fetching subscriber details:', error);
+        console.error('Error fetching subscriber details or recharge history:', error);
         alert('Failed to load subscriber details');
     }
 }
 
 function closeSubscriberDetailsModal() {
     document.getElementById('subscriberDetailsModal').style.display = 'none';
+    // Remove userId from URL without reloading the page
+    const url = new URL(window.location);
+    url.searchParams.delete('userId');
+    window.history.replaceState({}, '', url);
 }
 
 // CRUD operations
@@ -150,8 +190,12 @@ addSubscriberForm.addEventListener('submit', async (e) => {
     const subscriber = {
         name: document.getElementById('name').value,
         email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
-        plan: document.getElementById('plan').value
+        mobileNumber: document.getElementById('phone').value,
+        status: 'ACTIVE',
+        joinDate: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
+        membershipStatus: 'Standard', // Default value
+        role: 'ROLE_USER', // Default role for subscribers
+        password: 'defaultPassword123' // You might want to handle password differently in a real app
     };
     console.log('Submitting subscriber:', subscriber); 
     try {
@@ -207,7 +251,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window.onclick = (event) => {
         const addModal = document.getElementById('addSubscriberModal');
         const detailsModal = document.getElementById('subscriberDetailsModal');
-        if (event.target === addModal) addModal.style.display = 'none';
-        if (event.target === detailsModal) detailsModal.style.display = 'none';
+        if (event.target === addModal) closeAddSubscriberModal();
+        if (event.target === detailsModal) closeSubscriberDetailsModal();
     };
 });
