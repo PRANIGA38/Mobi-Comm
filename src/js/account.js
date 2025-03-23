@@ -84,13 +84,16 @@ async function sendOTP(mobile) {
         const response = await fetch('http://localhost:8083/api/auth/send-otp', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('jwtToken') || ''}`
+                'Content-Type': 'application/json'
+                // Removed Authorization header since this is a public endpoint
             },
             body: JSON.stringify({ mobileNumber: mobile })
         });
 
-        if (!response.ok) throw new Error(await response.text() || 'Failed to send OTP');
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Failed to send OTP');
+        }
 
         const otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
         otpModal.show();
@@ -100,7 +103,15 @@ async function sendOTP(mobile) {
         document.getElementById('otpMobileDisplay').textContent = mobile;
         startOTPTimer();
     } catch (error) {
-        document.getElementById('mobile-error').textContent = error.message;
+        let errorMessage = error.message;
+        if (errorMessage.includes('Failed to send OTP')) {
+            errorMessage = 'Unable to send OTP. Please try again later.';
+        } else if (errorMessage === 'User not found') {
+            errorMessage = 'Mobile number not registered. Please sign up.';
+        } else if (errorMessage === 'User account is not active') {
+            errorMessage = 'Your account is inactive. Please contact support.';
+        }
+        document.getElementById('mobile-error').textContent = errorMessage;
         document.getElementById('mobile-error').style.display = 'block';
     }
 }
@@ -125,13 +136,16 @@ async function verifyOTP() {
         const response = await fetch('http://localhost:8083/api/auth/verify-otp', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('jwtToken') || ''}`
+                'Content-Type': 'application/json'
+                // Removed Authorization header since this is a public endpoint
             },
             body: JSON.stringify({ mobileNumber: mobile, otp: enteredOTP })
         });
 
-        if (!response.ok) throw new Error(await response.text() || 'Invalid OTP');
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Invalid OTP');
+        }
 
         const token = await response.text();
         localStorage.setItem('jwtToken', token);
@@ -141,7 +155,11 @@ async function verifyOTP() {
         document.getElementById('success-container').style.display = 'block';
         await checkUserRole(token);
     } catch (error) {
-        otpError.textContent = error.message;
+        let errorMessage = error.message;
+        if (errorMessage === 'Invalid OTP') {
+            errorMessage = 'The OTP you entered is incorrect. Please try again.';
+        }
+        otpError.textContent = errorMessage;
         otpError.style.display = 'block';
     }
 }
@@ -168,6 +186,7 @@ document.getElementById('otpForm').addEventListener('submit', function (event) {
     sendOTP(mobile);
 });
 
+// Admin login form submission (unchanged as per your request)
 document.getElementById('adminForm').addEventListener('submit', async function (event) {
     event.preventDefault();
     const username = document.getElementById('username').value.trim();
@@ -226,7 +245,7 @@ async function checkUserRole(token) {
     }
 }
 
-// Update checkAdminRole to use fetchWithAuth
+// Update checkAdminRole to use fetchWithAuth (unchanged as per your request)
 async function checkAdminRole(token) {
     try {
         const response = await fetchWithAuth('http://localhost:8083/api/admin/plans', {
