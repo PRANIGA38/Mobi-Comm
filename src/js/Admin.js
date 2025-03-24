@@ -259,7 +259,6 @@ function displayPlansWithPagination() {
             <td>${plan.validity} days</td>
             <td>${plan.data}GB</td>
             <td>₹${plan.price}</td>
-            <td>${plan.activeUsers || 0}</td>
             <td>${plan.categories ? plan.categories.map(cat => cat.name.charAt(0).toUpperCase() + cat.name.slice(1)).join(', ') : 'N/A'}</td>
             <td>
                 <div class="d-flex gap-2">
@@ -434,7 +433,6 @@ async function savePlan(e) {
         validity: parseInt(document.getElementById('plan-validity').value),
         data: parseFloat(document.getElementById('plan-data').value),
         price: parseFloat(document.getElementById('plan-price').value),
-        activeUsers: planId ? undefined : 0,
         sms: document.getElementById('plan-sms').value || null,
         calls: document.getElementById('plan-calls').value || null,
         benefits: document.getElementById('plan-benefits').value || null,

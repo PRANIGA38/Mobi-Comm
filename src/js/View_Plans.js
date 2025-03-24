@@ -432,7 +432,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await populateCategories();
     // Get mobile number from URL or localStorage
     const urlParams = new URLSearchParams(window.location.search);
-    let mobileNumber = urlParams.get('mobile') || localStorage.getItem('rechargeMobileNumber');
+    let mobileNumber = urlParams.get('mobile');
     const mobileInput = document.getElementById('sidebarMobile');
 
     if (mobileNumber) {
