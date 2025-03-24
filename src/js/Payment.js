@@ -48,7 +48,7 @@ window.onload = function () {
 
     forms.forEach(form => {
         if (form) {
-            form.addEventListener('submit', function (event) {
+            form.addEventListener('submit', async function (event) {
                 if (!form.checkValidity()) {
                     event.preventDefault();
                     event.stopPropagation();
@@ -86,9 +86,45 @@ window.onload = function () {
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
                 submitBtn.disabled = true;
 
-                setTimeout(() => {
-                    window.location.href = `receipt.html?amount=${encodeURIComponent(amount)}&method=${encodeURIComponent(method)}&accountDetail=${encodeURIComponent(accountDetail)}&mobile=${encodeURIComponent(mobileNumber)}`;
-                }, 2000);
+                // Prepare transaction data to match the Transaction entity
+                const transactionData = {
+                    amount: parseFloat(amount),
+                    transactionType: method,
+                    accountDetail: accountDetail,
+                    user: {
+                        mobileNumber: mobileNumber
+                    }
+                };
+
+                console.log('Sending transaction data:', transactionData);
+
+                try {
+                    // Send transaction data to the backend
+                    const response = await fetch('http://localhost:8083/api/transactions/save', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` // Include JWT token if user is logged in
+                        },
+                        body: JSON.stringify(transactionData)
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Server response:', errorText);
+                        throw new Error('Failed to save transaction');
+                    }
+
+                    // Redirect to receipt page after successful transaction save
+                    setTimeout(() => {
+                        window.location.href = `receipt.html?amount=${encodeURIComponent(amount)}&method=${encodeURIComponent(method)}&accountDetail=${encodeURIComponent(accountDetail)}&mobile=${encodeURIComponent(mobileNumber)}`;
+                    }, 1000);
+                } catch (error) {
+                    console.error('Error saving transaction:', error);
+                    alert('Failed to process payment. Please try again.');
+                    submitBtn.innerHTML = '<i class="bi bi-wallet me-2"></i>Pay Now';
+                    submitBtn.disabled = false;
+                }
             });
         }
     });
