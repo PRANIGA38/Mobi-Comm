@@ -59,7 +59,17 @@ document.getElementById('recharge-btn').addEventListener('click', async function
         mobileInput.style.borderColor = '#dc3545';
     }
 });
+document.addEventListener("DOMContentLoaded", function () {
+    const currentPage = window.location.pathname; // Get the current page path
+    const navLinks = document.querySelectorAll(".nav-link");
 
+    navLinks.forEach(link => {
+        // Compare the href of the link with the current page
+        if (link.getAttribute("href") === currentPage) {
+            link.parentElement.classList.add("active"); // Add 'active' to the parent <li>
+        }
+    });
+});
 // Smooth scrolling, carousel, and other UI enhancements remain unchanged
 document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {

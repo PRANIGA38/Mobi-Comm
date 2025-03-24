@@ -452,6 +452,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             validateAndUpdateMobile();
         }
     });
+    document.addEventListener("DOMContentLoaded", function () {
+        const currentPage = window.location.pathname; // Get the current page path
+        const navLinks = document.querySelectorAll(".nav-link");
+    
+        navLinks.forEach(link => {
+            // Compare the href of the link with the current page
+            if (link.getAttribute("href") === currentPage) {
+                link.parentElement.classList.add("active"); // Add 'active' to the parent <li>
+            }
+        });
+    });
 // Filter buttons
 document.getElementById('applyFilters').addEventListener('click', applyFilters);
 document.getElementById('resetFilters').addEventListener('click', async function() {

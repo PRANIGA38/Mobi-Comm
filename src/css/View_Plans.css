@@ -422,7 +422,16 @@ footer {
     flex-direction: column;
     gap: 10px;
 }
+.nav-item.active .nav-link {
+    font-weight: bold; 
+    color: #000000;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
 
+/* Optional: Hover effect for non-active items */
+.nav-link:hover {
+    color: #000000;
+}
 .btn-select-plan {
     background: var(--nav-gradient);
     color: white;
