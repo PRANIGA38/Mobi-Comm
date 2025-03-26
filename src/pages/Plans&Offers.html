@@ -103,6 +103,7 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>Category Name</th>
+                                            <th>Status</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -114,7 +115,6 @@
                             </nav>
                         </div>
                     </div>
-
 
                     <!-- Plans & Offers Section -->
                     <div class="card mb-4">
@@ -151,11 +151,10 @@
                             </nav>
                         </div>
                     </div>
-
                 </div>
             </div>
 
-            <!-- Add Category Modal -->
+            <!-- Add/Edit Category Modal -->
             <div class="modal fade" id="category-modal" tabindex="-1">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -179,6 +178,7 @@
                     </div>
                 </div>
             </div>
+
             <!-- Plan Modal -->
             <div class="modal fade" id="plan-modal" tabindex="-1">
                 <div class="modal-dialog">
@@ -228,12 +228,16 @@
                                         placeholder="e.g., Netflix subscription included"></textarea>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="plan-categories" class="form-label">Categories (select all that apply)</label>
+                                    <label for="plan-categories" class="form-label">Categories (select all that
+                                        apply)</label>
                                     <div class="dropdown">
-                                        <button class="btn btn-outline-primary dropdown-toggle w-100 text-start" type="button" id="categoriesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <button class="btn btn-outline-primary dropdown-toggle w-100 text-start"
+                                            type="button" id="categoriesDropdown" data-bs-toggle="dropdown"
+                                            aria-expanded="false">
                                             Select Categories
                                         </button>
-                                        <ul class="dropdown-menu w-100" aria-labelledby="categoriesDropdown" id="plan-categories-dropdown">
+                                        <ul class="dropdown-menu w-100" aria-labelledby="categoriesDropdown"
+                                            id="plan-categories-dropdown">
                                             <!-- Categories will be populated dynamically -->
                                         </ul>
                                     </div>
@@ -260,6 +264,7 @@
                     </div>
                 </div>
             </div>
+
             <!-- Mobile Sidebar -->
             <div class="sidebar d-md-none" id="mobileSidebar">
                 <div class="sidebar-header">
@@ -316,5 +321,4 @@
         crossorigin="anonymous"></script>
     <script src="/src/js/PlansAndOffers.js"></script>
 </body>
-
 </html>

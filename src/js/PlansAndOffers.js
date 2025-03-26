@@ -23,7 +23,7 @@ const plansTable = document.getElementById('plans-table');
 const planModal = document.getElementById('plan-modal');
 const categoryModal = document.getElementById('category-modal');
 const categoryButtonsContainer = document.getElementById('category-buttons');
-const planCategoriesContainer = document.getElementById('plan-categories-container');
+const planCategoriesDropdown = document.getElementById('plan-categories-dropdown');
 const paginationControls = document.getElementById('pagination-controls');
 const planForm = document.getElementById('plan-form');
 const addPlanBtn = document.querySelector('.add-plan-btn');
@@ -52,7 +52,7 @@ let allPlans = [];
 let totalPagesPlans = 1;
 
 // Pagination settings for Categories
-const CATEGORIES_PER_PAGE = 3; 
+const CATEGORIES_PER_PAGE = 3;
 let currentPageCategories = 1;
 let allCategories = [];
 let totalPagesCategories = 1;
@@ -117,7 +117,9 @@ function displayPlansWithPagination() {
             <td>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-primary edit-plan" data-id="${plan.id}">Edit</button>
-                    <button class="btn btn-sm btn-warning deactivate-plan" data-id="${plan.id}">Deactivate</button>
+                    <button class="btn btn-sm btn-${plan.isActive ? 'warning' : 'success'} toggle-plan" data-id="${plan.id}">
+                        ${plan.isActive ? 'Deactivate' : 'Activate'}
+                    </button>
                 </div>
             </td>
         `;
@@ -127,8 +129,8 @@ function displayPlansWithPagination() {
     document.querySelectorAll('.edit-plan').forEach(button => {
         button.addEventListener('click', () => openPlanModal(parseInt(button.getAttribute('data-id'))));
     });
-    document.querySelectorAll('.deactivate-plan').forEach(button => {
-        button.addEventListener('click', () => deactivatePlan(parseInt(button.getAttribute('data-id'))));
+    document.querySelectorAll('.toggle-plan').forEach(button => {
+        button.addEventListener('click', () => togglePlanStatus(parseInt(button.getAttribute('data-id'))));
     });
 
     renderPlansPaginationControls();
@@ -184,13 +186,13 @@ async function fetchCategories() {
         renderPlanCategoryCheckboxes();
     } catch (error) {
         console.error('Error fetching categories:', error);
-        categoriesTable.innerHTML = `<tr><td colspan="2" class="text-center py-3">Error loading categories</td></tr>`;
+        categoriesTable.innerHTML = `<tr><td colspan="3" class="text-center py-3">Error loading categories</td></tr>`;
     }
 }
 
 function displayCategoriesWithPagination() {
     if (allCategories.length === 0) {
-        categoriesTable.innerHTML = `<tr><td colspan="2" class="text-center py-3">No categories found</td></tr>`;
+        categoriesTable.innerHTML = `<tr><td colspan="3" class="text-center py-3">No categories found</td></tr>`;
         categoriesPaginationControls.innerHTML = '';
         return;
     }
@@ -205,15 +207,24 @@ function displayCategoriesWithPagination() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td class="fw-medium">${category.name.charAt(0).toUpperCase() + category.name.slice(1)}</td>
+            <td>${category.isActive ? 'Active' : 'Inactive'}</td>
             <td>
-                <button class="btn btn-sm btn-danger delete-category" data-id="${category.id}">Delete</button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-primary edit-category" data-id="${category.id}">Edit</button>
+                    <button class="btn btn-sm btn-${category.isActive ? 'warning' : 'success'} toggle-category" data-id="${category.id}">
+                        ${category.isActive ? 'Deactivate' : 'Activate'}
+                    </button>
+                </div>
             </td>
         `;
         categoriesTable.appendChild(row);
     });
 
-    document.querySelectorAll('.delete-category').forEach(button => {
-        button.addEventListener('click', () => deleteCategory(parseInt(button.getAttribute('data-id'))));
+    document.querySelectorAll('.edit-category').forEach(button => {
+        button.addEventListener('click', () => openEditCategoryModal(parseInt(button.getAttribute('data-id'))));
+    });
+    document.querySelectorAll('.toggle-category').forEach(button => {
+        button.addEventListener('click', () => toggleCategoryStatus(parseInt(button.getAttribute('data-id'))));
     });
 
     renderCategoriesPaginationControls();
@@ -279,11 +290,9 @@ function renderCategoryFilters() {
     });
 }
 
-// Replace the renderPlanCategoryCheckboxes function
 function renderPlanCategoryCheckboxes() {
-    const dropdownMenu = document.getElementById('plan-categories-dropdown');
-    dropdownMenu.innerHTML = ''; // Clear existing content
-    allCategories.forEach(category => {
+    planCategoriesDropdown.innerHTML = '';
+    allCategories.filter(category => category.isActive).forEach(category => { // Only active categories
         const li = document.createElement('li');
         li.className = 'dropdown-item';
         li.innerHTML = `
@@ -294,26 +303,21 @@ function renderPlanCategoryCheckboxes() {
                 </label>
             </div>
         `;
-        dropdownMenu.appendChild(li);
+        planCategoriesDropdown.appendChild(li);
     });
 
-    // Update dropdown button text when checkboxes are selected
     document.querySelectorAll('.category-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', updateDropdownText);
     });
 }
 
-// Function to update the dropdown button text based on selected categories
 function updateDropdownText() {
     const selectedCategories = Array.from(document.querySelectorAll('.category-checkbox:checked'))
         .map(checkbox => checkbox.value.charAt(0).toUpperCase() + checkbox.value.slice(1));
     const dropdownButton = document.getElementById('categoriesDropdown');
-    dropdownButton.textContent = selectedCategories.length > 0 
-        ? selectedCategories.join(', ') 
-        : 'Select Categories';
+    dropdownButton.textContent = selectedCategories.length > 0 ? selectedCategories.join(', ') : 'Select Categories';
 }
 
-// Update openPlanModal to handle the dropdown
 async function openPlanModal(planId = null) {
     document.getElementById('plan-modal-title').textContent = planId ? 'Edit Plan' : 'Add New Plan';
     document.getElementById('plan-id').value = planId || '';
@@ -323,7 +327,7 @@ async function openPlanModal(planId = null) {
     });
     document.getElementById('plan-is-hot-deal').value = 'false';
     hotDealPriceDiv.style.display = 'none';
-    updateDropdownText(); // Reset dropdown text
+    updateDropdownText();
 
     if (planId) {
         try {
@@ -342,7 +346,7 @@ async function openPlanModal(planId = null) {
                     const checkbox = document.getElementById(`category-${category.name}`);
                     if (checkbox) checkbox.checked = true;
                 });
-                updateDropdownText(); // Update dropdown text based on selected categories
+                updateDropdownText();
             }
             document.getElementById('plan-is-hot-deal').value = plan.isHotDeal ? 'true' : 'false';
             if (plan.isHotDeal) {
@@ -357,7 +361,6 @@ async function openPlanModal(planId = null) {
     planModalInstance.show();
 }
 
-// Update savePlan to handle the dropdown checkboxes
 async function savePlan(e) {
     e.preventDefault();
     const planId = document.getElementById('plan-id').value;
@@ -376,7 +379,7 @@ async function savePlan(e) {
         categories: selectedCategories.length > 0 ? selectedCategories : null,
         isHotDeal: isHotDeal,
         originalPrice: isHotDeal ? parseFloat(document.getElementById('plan-original-price').value) : null,
-        isActive: true
+        isActive: true // Default to active for new plans
     };
 
     if (!plan.name || isNaN(plan.validity) || isNaN(plan.data) || isNaN(plan.price)) {
@@ -404,42 +407,62 @@ async function savePlan(e) {
     }
 }
 
-async function deactivatePlan(planId) {
-    if (!confirm('Are you sure you want to deactivate this plan? It will no longer be visible to users.')) return;
+async function togglePlanStatus(planId) {
+    const plan = allPlans.find(p => p.id === planId);
+    const action = plan.isActive ? 'deactivate' : 'activate';
+    if (!confirm(`Are you sure you want to ${action} this plan? It will ${action === 'deactivate' ? 'hide' : 'show'} on the user side.`)) return;
+
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/admin/plans/${planId}`, { method: 'DELETE' });
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/plans/${planId}/toggle`, { method: 'PUT' });
         if (response.ok) {
             const activeCategory = document.querySelector('.category-btn.active').getAttribute('data-category');
             fetchPlans(activeCategory);
         } else {
-            throw new Error('Failed to deactivate plan');
+            throw new Error(`Failed to ${action} plan`);
         }
     } catch (error) {
-        console.error('Error deactivating plan:', error);
+        console.error(`Error toggling plan status:`, error);
         alert(error.message);
     }
 }
 
-function openCategoryModal() {
+async function openEditCategoryModal(categoryId) {
+    const category = allCategories.find(cat => cat.id === categoryId);
+    if (!category) return;
+
+    document.getElementById('category-modal-title').textContent = 'Edit Category';
+    document.getElementById('category-name').value = category.name;
+    categoryForm.dataset.categoryId = categoryId;
+    categoryModalInstance.show();
+}
+
+function openAddCategoryModal() {
+    document.getElementById('category-modal-title').textContent = 'Add New Category';
     categoryForm.reset();
+    delete categoryForm.dataset.categoryId;
     categoryModalInstance.show();
 }
 
 async function saveCategory(e) {
     e.preventDefault();
     const categoryName = document.getElementById('category-name').value.trim();
+    const categoryId = categoryForm.dataset.categoryId;
+
     if (!categoryName) {
         alert('Please enter a category name');
         return;
     }
 
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/admin/categories`, {
-            method: 'POST',
-            body: JSON.stringify({ name: categoryName.toLowerCase() })
+        const url = categoryId ? `${API_BASE_URL}/admin/categories/${categoryId}` : `${API_BASE_URL}/admin/categories`;
+        const method = categoryId ? 'PUT' : 'POST';
+        const response = await fetchWithAuth(url, {
+            method,
+            body: JSON.stringify({ name: categoryName.toLowerCase(), isActive: true })
         });
         if (response.ok) {
             categoryModalInstance.hide();
+            delete categoryForm.dataset.categoryId;
             fetchCategories();
         }
     } catch (error) {
@@ -448,27 +471,30 @@ async function saveCategory(e) {
     }
 }
 
-async function deleteCategory(categoryId) {
-    if (!confirm('Are you sure you want to delete this category? Plans associated with this category will lose this category.')) return;
+async function toggleCategoryStatus(categoryId) {
+    const category = allCategories.find(cat => cat.id === categoryId);
+    const action = category.isActive ? 'deactivate' : 'activate';
+    if (!confirm(`Are you sure you want to ${action} this category? Plans with this category may be affected.`)) return;
+
     try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/admin/categories/${categoryId}`, { method: 'DELETE' });
+        console.log('Toggling category ID:', categoryId);
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/categories/${categoryId}/toggle`, { method: 'PUT' });
         if (response.ok) {
             fetchCategories();
             const activeCategory = document.querySelector('.category-btn.active').getAttribute('data-category');
-            fetchPlans(activeCategory); // Refresh plans after category deletion
+            fetchPlans(activeCategory);
         } else {
-            throw new Error('Failed to delete category');
+            throw new Error(`Failed to ${action} category - Status: ${response.status}`);
         }
     } catch (error) {
-        console.error('Error deleting category:', error);
+        console.error(`Error toggling category status:`, error);
         alert(error.message);
     }
 }
-
 // Event Listeners
 addPlanBtn.addEventListener('click', () => openPlanModal());
 planForm.addEventListener('submit', savePlan);
-addCategoryBtn.addEventListener('click', openCategoryModal);
+addCategoryBtn.addEventListener('click', openAddCategoryModal);
 categoryForm.addEventListener('submit', saveCategory);
 sidebarToggle.addEventListener('click', () => mobileSidebar.classList.toggle('show'));
 isHotDealSelect.addEventListener('change', () => {
