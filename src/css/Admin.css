@@ -363,3 +363,18 @@ body {
         transform: translateY(0);
     }
 }
+.dropdown-menu {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.dropdown-toggle {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdown-item .form-check {
+    margin-bottom: 0;
+    padding: 5px 10px;
+}

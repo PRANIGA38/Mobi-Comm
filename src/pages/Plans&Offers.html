@@ -228,9 +228,15 @@
                                         placeholder="e.g., Netflix subscription included"></textarea>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="plan-categories" class="form-label">Categories (select all that
-                                        apply)</label>
-                                    <div id="plan-categories-container"></div>
+                                    <label for="plan-categories" class="form-label">Categories (select all that apply)</label>
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-primary dropdown-toggle w-100 text-start" type="button" id="categoriesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Select Categories
+                                        </button>
+                                        <ul class="dropdown-menu w-100" aria-labelledby="categoriesDropdown" id="plan-categories-dropdown">
+                                            <!-- Categories will be populated dynamically -->
+                                        </ul>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="plan-is-hot-deal" class="form-label">Is Hot Deal?</label>

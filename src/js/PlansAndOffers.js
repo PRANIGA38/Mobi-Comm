@@ -279,30 +279,51 @@ function renderCategoryFilters() {
     });
 }
 
+// Replace the renderPlanCategoryCheckboxes function
 function renderPlanCategoryCheckboxes() {
-    planCategoriesContainer.innerHTML = '';
+    const dropdownMenu = document.getElementById('plan-categories-dropdown');
+    dropdownMenu.innerHTML = ''; // Clear existing content
     allCategories.forEach(category => {
-        const div = document.createElement('div');
-        div.className = 'form-check';
-        div.innerHTML = `
-            <input class="form-check-input" type="checkbox" value="${category.name}" id="category-${category.name}">
-            <label class="form-check-label" for="category-${category.name}">
-                ${category.name.charAt(0).toUpperCase() + category.name.slice(1)} Plans
-            </label>
+        const li = document.createElement('li');
+        li.className = 'dropdown-item';
+        li.innerHTML = `
+            <div class="form-check">
+                <input class="form-check-input category-checkbox" type="checkbox" value="${category.name}" id="category-${category.name}">
+                <label class="form-check-label" for="category-${category.name}">
+                    ${category.name.charAt(0).toUpperCase() + category.name.slice(1)} Plans
+                </label>
+            </div>
         `;
-        planCategoriesContainer.appendChild(div);
+        dropdownMenu.appendChild(li);
+    });
+
+    // Update dropdown button text when checkboxes are selected
+    document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateDropdownText);
     });
 }
 
+// Function to update the dropdown button text based on selected categories
+function updateDropdownText() {
+    const selectedCategories = Array.from(document.querySelectorAll('.category-checkbox:checked'))
+        .map(checkbox => checkbox.value.charAt(0).toUpperCase() + checkbox.value.slice(1));
+    const dropdownButton = document.getElementById('categoriesDropdown');
+    dropdownButton.textContent = selectedCategories.length > 0 
+        ? selectedCategories.join(', ') 
+        : 'Select Categories';
+}
+
+// Update openPlanModal to handle the dropdown
 async function openPlanModal(planId = null) {
     document.getElementById('plan-modal-title').textContent = planId ? 'Edit Plan' : 'Add New Plan';
     document.getElementById('plan-id').value = planId || '';
     planForm.reset();
-    document.querySelectorAll('#plan-form input[type="checkbox"]').forEach(checkbox => {
+    document.querySelectorAll('.category-checkbox').forEach(checkbox => {
         checkbox.checked = false;
     });
     document.getElementById('plan-is-hot-deal').value = 'false';
     hotDealPriceDiv.style.display = 'none';
+    updateDropdownText(); // Reset dropdown text
 
     if (planId) {
         try {
@@ -321,6 +342,7 @@ async function openPlanModal(planId = null) {
                     const checkbox = document.getElementById(`category-${category.name}`);
                     if (checkbox) checkbox.checked = true;
                 });
+                updateDropdownText(); // Update dropdown text based on selected categories
             }
             document.getElementById('plan-is-hot-deal').value = plan.isHotDeal ? 'true' : 'false';
             if (plan.isHotDeal) {
@@ -335,10 +357,11 @@ async function openPlanModal(planId = null) {
     planModalInstance.show();
 }
 
+// Update savePlan to handle the dropdown checkboxes
 async function savePlan(e) {
     e.preventDefault();
     const planId = document.getElementById('plan-id').value;
-    const selectedCategories = Array.from(document.querySelectorAll('#plan-form input[type="checkbox"]:checked'))
+    const selectedCategories = Array.from(document.querySelectorAll('.category-checkbox:checked'))
         .map(checkbox => ({ name: checkbox.value }));
     const isHotDeal = document.getElementById('plan-is-hot-deal').value === 'true';
     const plan = {
@@ -373,7 +396,7 @@ async function savePlan(e) {
             planModalInstance.hide();
             const activeCategory = document.querySelector('.category-btn.active').getAttribute('data-category');
             fetchPlans(activeCategory);
-            fetchCategories(); // Refresh categories after saving a plan
+            fetchCategories();
         }
     } catch (error) {
         console.error('Error saving plan:', error.message);
