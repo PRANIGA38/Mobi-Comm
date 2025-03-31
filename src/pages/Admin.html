@@ -18,8 +18,7 @@
             <!-- Sidebar -->
             <div class="col-lg-2 col-md-3 p-0 sidebar d-none d-md-block">
                 <div class="sidebar-header">
-                    <a href="/src/pages/MobilePrepaid.html"
-                        style="color: white; text-decoration: none; display: flex; align-items: center;">
+                    <a href="/src/pages/MobilePrepaid.html" style="color: white; text-decoration: none; display: flex; align-items: center;">
                         <img src="/src/assets/images/Mobi-icon-2.png" alt="Logo">
                         <h3>Mobi-comm</h3>
                     </a>
@@ -50,13 +49,7 @@
                         </a>
                     </div>
                     <div class="menu-item">
-                        <a href="/src/pages/Analytics.html" style="color: white; text-decoration: none;">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Analytics</span>
-                        </a>
-                    </div>
-                    <div class="menu-item">
-                        <a href="/src/pages/account.html" class="quick-action d-block" id="logout" style="color: white; text-decoration: none;">
+                        <a href="/src/pages/account.html" style="color: white; text-decoration: none;">
                             <i class="fas fa-sign-out-alt"></i>
                             <span>Logout</span>
                         </a>
@@ -66,7 +59,7 @@
                         <div class="modal-content">
                             <span class="close">×</span>
                             <p>Are you sure you want to logout?</p>
-                            <button id="confirmLogout">Yes,Logout</button>
+                            <button id="confirmLogout">Yes, Logout</button>
                             <br>
                             <button id="cancelLogout">Cancel</button>
                         </div>
@@ -88,8 +81,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
                         <h2>Admin Dashboard</h2>
                         <div class="d-flex align-items-center">
-                            <img src="/src/assets/icons/adminProfile.png" alt="Admin Profile" class="rounded-circle me-2"
-                                style="height: 50px;">
+                            <img src="/src/assets/icons/adminProfile.png" alt="Admin Profile" class="rounded-circle me-2" style="height: 50px;">
                         </div>
                     </div>
                     <!-- Welcome Section -->
@@ -97,18 +89,17 @@
                         <div class="row align-items-center">
                             <div class="col-md-7">
                                 <h2>Welcome back!</h2>
-                                <p>Manage your subscribers, plans, categories, and analytics here . . .</p>
+                                <p>Manage your subscribers, plans, and categories here . . .</p>
                                 <div class="quick-actions">
                                     <a href="Plans&Offers.html">
-                                    <button class="quick-action-btn add-plan-btn">
-                                        <i class="fas fa-tag me-2"></i>Add New Plan
-                                    </button>
+                                        <button class="quick-action-btn add-plan-btn">
+                                            <i class="fas fa-tag me-2"></i>Add New Plan
+                                        </button>
                                     </a>
-                                    
                                     <a href="subscribers.html">
-                                    <button class="quick-action-btn">
-                                        <i class="fas fa-users me-2"></i>Add New Subscriber
-                                    </button>
+                                        <button class="quick-action-btn">
+                                            <i class="fas fa-users me-2"></i>Add New Subscriber
+                                        </button>
                                     </a>
                                 </div>
                             </div>
@@ -117,8 +108,7 @@
                     <!-- Search Bar -->
                     <div class="mb-4">
                         <div class="input-group">
-                            <input type="text" id="searchInput" class="form-control"
-                                placeholder="Search subscribers...">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search subscribers...">
                             <button id="searchButton" class="btn btn-primary">
                                 <i class="fas fa-search"></i>
                             </button>
@@ -134,7 +124,7 @@
                                         <i class="fas fa-users"></i>
                                     </div>
                                     <div>
-                                        <h4 class="mb-0">2,543</h4>
+                                        <h4 class="mb-0" id="totalSubscribers">Loading...</h4>
                                         <p class="text-muted mb-0">Total Subscribers</p>
                                     </div>
                                 </div>
@@ -147,7 +137,7 @@
                                         <i class="fas fa-clock"></i>
                                     </div>
                                     <div>
-                                        <h4 class="mb-0">58</h4>
+                                        <h4 class="mb-0" id="expiringSoon">Loading...</h4>
                                         <p class="text-muted mb-0">Expiring Soon</p>
                                     </div>
                                 </div>
@@ -160,7 +150,7 @@
                                         <i class="fas fa-tag"></i>
                                     </div>
                                     <div>
-                                        <h4 class="mb-0">32</h4>
+                                        <h4 class="mb-0" id="activePlans">Loading...</h4>
                                         <p class="text-muted mb-0">Active Plans</p>
                                     </div>
                                 </div>
@@ -173,7 +163,7 @@
                                         <i class="fas fa-rupee-sign"></i>
                                     </div>
                                     <div>
-                                        <h4 class="mb-0">₹3.2M</h4>
+                                        <h4 class="mb-0" id="monthlyRevenue">Loading...</h4>
                                         <p class="text-muted mb-0">Monthly Revenue</p>
                                     </div>
                                 </div>
@@ -200,19 +190,16 @@
                                             <th>Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="expiring-subscribers">
-                                        <!-- Dynamically populated with JavaScript -->
-                                    </tbody>
+                                    <tbody id="expiring-subscribers"></tbody>
                                 </table>
                             </div>
                         </div>
-                    </div>                        
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- User Details Modal -->
+        <!-- User Details Modal (unchanged) -->
         <div class="modal fade" id="user-modal" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -222,7 +209,7 @@
                     </div>
                     <div class="modal-body">
                         <div class="d-flex flex-column flex-md-row align-items-center align-items-md-start mb-4 pb-4 border-bottom">
-                            <img src="/src/assets/icons/users.png" alt="User" class="rounded-circle me-3"id="modal-user-avatar" style="width: 100px; height: 100px;">
+                            <img src="/src/assets/icons/users.png" alt="User" class="rounded-circle me-3" id="modal-user-avatar" style="width: 100px; height: 100px;">
                             <div class="text-center text-md-start">
                                 <h4 id="modal-user-name">Loading...</h4>
                                 <p id="modal-user-phone" class="mb-1">Loading...</p>
@@ -243,9 +230,7 @@
                                             <th>Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="recharge-history-table">
-                                        <!-- Dynamically populated with JavaScript -->
-                                    </tbody>
+                                    <tbody id="recharge-history-table"></tbody>
                                 </table>
                             </div>
                         </div>
@@ -253,11 +238,11 @@
                 </div>
             </div>
         </div>
-        <!-- Mobile sidebar for smaller screens -->
+
+        <!-- Mobile Sidebar -->
         <div class="sidebar d-md-none" id="mobileSidebar">
             <div class="sidebar-header">
-                <a href="/src/pages/MobilePrepaid.html"
-                    style="color: white; text-decoration: none; display: flex; align-items: center;">
+                <a href="/src/pages/MobilePrepaid.html" style="color: white; text-decoration: none; display: flex; align-items: center;">
                     <img src="/src/assets/images/Mobi-icon-2.png" alt="Logo">
                     <h3>Mobi-comm</h3>
                 </a>
@@ -287,12 +272,6 @@
                         <span>Categories</span>
                     </a>
                 </div>
-                <div class="menu-item active">
-                    <a href="/src/pages/Analytics.html" style="color: white; text-decoration: none;">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Analytics</span>
-                    </a>
-                </div>
                 <div class="menu-item">
                     <a href="/src/pages/account.html" style="color: white; text-decoration: none;">
                         <i class="fas fa-sign-out-alt"></i>
@@ -302,8 +281,7 @@
             </div>
         </div>
     </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
-<script src="/src/js/Admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="/src/js/Admin.js"></script>
 </body>
 </html>
