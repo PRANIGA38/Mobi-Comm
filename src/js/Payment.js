@@ -1,5 +1,5 @@
 // Initialize Stripe with your publishable key
-const stripe = Stripe('pk_test_51R7foIQsXpFEKVlGzFzF2iHH3WW6RdOaYjGaF10rnCdrPSAiYv3H9eHS9SXDdrowS7pcZZassZyKR3BcgQ4uAf6d00hzNp9vBQ'); // Replace with your Stripe publishable key
+const stripe = Stripe('pk_test_51R7foIQsXpFEKVlGzFzF2iHH3WW6RdOaYjGaF10rnCdrPSAiYv3H9eHS9SXDdrowS7pcZZassZyKR3BcgQ4uAf6d00hzNp9vBQ'); 
 const elements = stripe.elements();
 
 // Create an instance of the card Element
