@@ -1,5 +1,5 @@
 // Initialize Stripe with your publishable key
-const stripe = Stripe('pk_test_51R7foIQsXpFEKVlGzFzF2iHH3WW6RdOaYjGaF10rnCdrPSAiYv3H9eHS9SXDdrowS7pcZZassZyKR3BcgQ4uAf6d00hzNp9vBQ'); 
+const stripe = Stripe('pk_test_51R7foIQsXpFEKVlGzFzF2iHH3WW6RdOaYjGaF10rnCdrPSAiYv3H9eHS9SXDdrowS7pcZZassZyKR3BcgQ4uAf6d00hzNp9vBQ');
 const elements = stripe.elements();
 
 // Create an instance of the card Element
@@ -90,7 +90,49 @@ window.onload = function () {
                         }
 
                         paymentMethodId = paymentMethod.id;
-                        accountDetail = paymentMethod.card.last4; // Last 4 digits of the card
+                        accountDetail = paymentMethod.card.last4;
+
+                        // Prepare transaction data
+                        const transactionData = {
+                            amount: parseFloat(amount),
+                            transactionType: method,
+                            accountDetail: accountDetail,
+                            user: {
+                                mobileNumber: mobileNumber
+                            }
+                        };
+
+                        console.log('Sending transaction data:', transactionData);
+
+                        // Send transaction data to the backend
+                        const response = await fetch('http://localhost:8083/api/transactions/save?paymentMethodId=' + paymentMethodId, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+                            },
+                            body: JSON.stringify(transactionData)
+                        });
+
+                        // Check if the response is OK before parsing JSON
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error('Server response:', errorText);
+                            throw new Error('Failed to save transaction: ' + errorText);
+                        }
+
+                        const result = await response.json();
+
+                        // Confirm the PaymentIntent on the frontend
+                        if (result.clientSecret) {
+                            const { error: confirmError } = await stripe.confirmCardPayment(result.clientSecret, {
+                                payment_method: paymentMethodId
+                            });
+
+                            if (confirmError) {
+                                throw new Error(confirmError.message);
+                            }
+                        }
                     } else {
                         switch (form.id) {
                             case 'upiPaymentFormElement':
@@ -106,37 +148,39 @@ window.onload = function () {
                                 accountDetail = document.getElementById('walletNumber').value;
                                 break;
                         }
-                    }
 
-                    // Prepare transaction data to match the Transaction entity
-                    const transactionData = {
-                        amount: parseFloat(amount),
-                        transactionType: method,
-                        accountDetail: accountDetail,
-                        user: {
-                            mobileNumber: mobileNumber
+                        // Prepare transaction data for non-card payments
+                        const transactionData = {
+                            amount: parseFloat(amount),
+                            transactionType: method,
+                            accountDetail: accountDetail,
+                            user: {
+                                mobileNumber: mobileNumber
+                            }
+                        };
+
+                        console.log('Sending transaction data:', transactionData);
+
+                        // Send transaction data to the backend
+                        const response = await fetch('http://localhost:8083/api/transactions/save', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+                            },
+                            body: JSON.stringify(transactionData)
+                        });
+
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error('Server response:', errorText);
+                            throw new Error('Failed to save transaction: ' + errorText);
                         }
-                    };
 
-                    console.log('Sending transaction data:', transactionData);
-
-                    // Send transaction data to the backend
-                    const response = await fetch('http://localhost:8083/api/transactions/save' + (paymentMethodId ? `?paymentMethodId=${paymentMethodId}` : ''), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('jwtToken')}` // Include JWT token if user is logged in
-                        },
-                        body: JSON.stringify(transactionData)
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('Server response:', errorText);
-                        throw new Error('Failed to save transaction');
+                        await response.json(); // Parse response for non-card payments
                     }
 
-                    // Redirect to receipt page after successful transaction save
+                    // Redirect to receipt page after successful transaction
                     setTimeout(() => {
                         window.location.href = `receipt.html?amount=${encodeURIComponent(amount)}&method=${encodeURIComponent(method)}&accountDetail=${encodeURIComponent(accountDetail)}&mobile=${encodeURIComponent(mobileNumber)}`;
                     }, 1000);

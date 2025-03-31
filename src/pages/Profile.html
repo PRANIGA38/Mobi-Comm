@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,19 +8,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="/src/css/Profile.css">
 </head>
-
 <body>
-    <!-- Scroll to Top Button -->
     <button onclick="scrollToTop()" id="scrollTopBtn" title="Go to top">↑</button>
-    
-    <!-- Toast notification container -->
     <div class="toast-container" id="toastContainer"></div>
-    
+
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark">
             <div class="container">
@@ -38,9 +32,7 @@
                         <li class="nav-item"><a class="nav-link" href="/src/pages/View_Plans.html">View Plans</a></li>
                         <li class="nav-item"><a class="nav-link" href="/src/pages/NewPrepaid.html">New Prepaid</a></li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="supportDropdown" data-bs-toggle="dropdown">
-                                Support
-                            </a>
+                            <a class="nav-link dropdown-toggle" href="#" id="supportDropdown" data-bs-toggle="dropdown">Support</a>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="/src/pages/FAQs.html">FAQs</a></li>
                                 <li><a class="dropdown-item" href="/src/pages/Feedback.html">Feedback</a></li>
@@ -58,8 +50,7 @@
             </div>
         </nav>
     </header>
-    
-    <!-- Success Container -->
+
     <div id="success-container" style="display: none;" class="text-center">
         <div class="my-4">
             <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
@@ -67,17 +58,16 @@
             <p class="text-muted">Redirecting to your Profile...</p>
         </div>
     </div>
-    
+
     <div class="profile-header">
         <button class="edit-profile-btn" id="editProfileBtn">
             <i class="bi bi-pencil-square"></i> Edit
         </button>
         <div class="profile-pic-container">
-            <div class="profile-pic">
-                <i class="bi bi-person"></i>
-            </div>
-            <div class="edit-profile-pic">
+            <div class="profile-pic" id="profilePic"></div>
+            <div class="edit-profile-pic" id="editProfilePic">
                 <i class="bi bi-camera"></i>
+                <input type="file" id="profileImageInput" accept="image/*" style="display: none;">
             </div>
         </div>
         <h2 class="user-name" id="userName"></h2>
@@ -91,8 +81,8 @@
             </span>
         </div>
     </div>
-    
-    <!-- Modal for editing profile -->
+
+    <!-- Edit Profile Modal (unchanged) -->
     <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -112,25 +102,18 @@
                         </div>
                         <div class="mb-3">
                             <label for="alternativeMobileInput" class="form-label">Alternative Mobile Number</label>
-                            <input type="text" class="form-control" id="alternativeMobileInput" 
-                                   pattern="[0-9]{10}" title="Please enter a valid 10-digit mobile number">
-                            <div class="invalid-feedback">
-                                Please enter a valid 10-digit mobile number
-                            </div>
+                            <input type="text" class="form-control" id="alternativeMobileInput" pattern="[0-9]{10}" title="Please enter a valid 10-digit mobile number">
+                            <div class="invalid-feedback">Please enter a valid 10-digit mobile number</div>
                         </div>
                         <div class="mb-3">
                             <label for="emailInput" class="form-label">Email ID</label>
                             <input type="email" class="form-control" id="emailInput" required>
-                            <div class="invalid-feedback">
-                                Please enter a valid email address
-                            </div>
+                            <div class="invalid-feedback">Please enter a valid email address</div>
                         </div>
                         <div class="mb-3">
                             <label for="addressInput" class="form-label">Address</label>
                             <textarea class="form-control" id="addressInput" rows="3" required></textarea>
-                            <div class="invalid-feedback">
-                                Please enter your address
-                            </div>
+                            <div class="invalid-feedback">Please enter your address</div>
                         </div>
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-custom">Save Changes</button>
@@ -142,7 +125,7 @@
     </div>
 
     <div class="container">
-        <!-- Quick Actions -->
+        <!-- Quick Actions (unchanged) -->
         <div class="row mb-4">
             <div class="col-3">
                 <a href="/src/pages/MobilePrepaid.html" class="quick-action d-block">
@@ -170,7 +153,7 @@
             </div>
         </div>
 
-        <!-- Custom Logout Modal -->
+        <!-- Logout Modal (unchanged) -->
         <div id="logoutModal">
             <div class="modal-content">
                 <span class="close">×</span>
@@ -180,12 +163,11 @@
             </div>
         </div>
 
-        <!-- Current Plan -->
+        <!-- Current Plan (removed Change Plan button) -->
         <div class="section-title">
             <i class="bi bi-bookmark-star"></i>
             <span>Current Plan</span>
         </div>
-
         <div class="card plan-card mb-4">
             <div class="plan-header">
                 <div class="d-flex justify-content-between align-items-center">
@@ -200,22 +182,18 @@
                 </div>
             </div>
             <div class="plan-body">
-                <div class="row" id="planFeatures">
-                    <!-- Features will be dynamically added here -->
-                </div>
+                <div class="row" id="planFeatures"></div>
                 <div class="d-flex gap-2 mt-3">
                     <button class="btn btn-custom flex-grow-1" id="rechargeBtn">Recharge Again</button>
-                    <button class="btn btn-outline-custom" id="changePlanBtn">Change Plan</button>
                 </div>
             </div>
         </div>
 
-        <!-- Data Usage -->
+        <!-- Data Usage (unchanged) -->
         <div class="section-title">
             <i class="bi bi-bar-chart"></i>
             <span>Data Usage</span>
         </div>
-
         <div class="data-usage mb-4">
             <h6>Daily Data</h6>
             <div class="progress">
@@ -225,7 +203,6 @@
                 <span id="dailyDataUsed"></span>
                 <span id="dailyDataTotal"></span>
             </div>
-
             <h6 class="mt-4">Monthly Data</h6>
             <div class="progress">
                 <div class="progress-bar" role="progressbar" id="monthlyDataProgress"></div>
@@ -236,67 +213,36 @@
             </div>
         </div>
 
-        <!-- Recent Transactions -->
+        <!-- Transaction History (updated columns) -->
         <div class="section-title">
             <i class="bi bi-clock-history"></i>
-            <span>Recent Transactions</span>
+            <span>Transaction History</span>
         </div>
-
-        <div class="card mb-4">
-            <div id="transactionList">
-                <!-- Transactions will be dynamically added here -->
-            </div>
-            <div class="d-grid gap-2 p-3">
-                <button class="btn btn-outline-custom" id="viewAllTransactionsBtn">View All Transactions</button>
-            </div>
-        </div>
-        <!-- Recharge History -->
-<div class="section-title">
-    <i class="bi bi-clock-history"></i>
-    <span>Recharge History</span>
-</div>
-
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Plan Name</th>
-                        <th>Recharge Date</th>
-                        <th>Amount</th>
-                        <th>Payment Mode</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="rechargeHistoryTable">
-                    <!-- Dynamically populated with JavaScript -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-        <!-- Offers & Recommendations -->
-        <div class="section-title">
-            <i class="bi bi-gift"></i>
-            <span>Offers For You</span>
-        </div>
-
         <div class="card mb-4">
             <div class="card-body">
-                <div class="row g-3" id="offersList">
-                    <!-- Offers will be dynamically added here -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionHistoryTable"></tbody>
+                    </table>
                 </div>
+            </div>
+            <div class="d-grid gap-2 p-3" id="transactionToggleBtnContainer" style="display: none;">
+                <button class="btn btn-outline-custom" id="toggleTransactionsBtn">View All</button>
             </div>
         </div>
 
-        <!-- Customer Support Section -->
+        <!-- Customer Support (unchanged) -->
         <div id="contact" class="section-title">
             <i class="bi bi-headset"></i>
             <span>Customer Support</span>
         </div>
-
         <div class="card mb-4">
             <div class="card-body">
                 <div class="row g-3">
@@ -329,7 +275,7 @@
         </div>
     </div>
 
-    <!-- Footer -->
+    <!-- Footer (unchanged) -->
     <footer class="bg-primary mt-5">
         <div class="container">
             <div class="footer-content">
