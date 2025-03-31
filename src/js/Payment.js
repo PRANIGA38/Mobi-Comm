@@ -1,4 +1,33 @@
+// Initialize Stripe with your publishable key
+const stripe = Stripe('pk_test_51R7foIQsXpFEKVlGzFzF2iHH3WW6RdOaYjGaF10rnCdrPSAiYv3H9eHS9SXDdrowS7pcZZassZyKR3BcgQ4uAf6d00hzNp9vBQ'); // Replace with your Stripe publishable key
+const elements = stripe.elements();
+
+// Create an instance of the card Element
+const cardElement = elements.create('card', {
+    style: {
+        base: {
+            fontSize: '16px',
+            color: '#32325d',
+        },
+    },
+});
+
 window.onload = function () {
+    // Mount Stripe Elements
+    cardElement.mount('#cardElement');
+
+    // Handle real-time validation errors from the card Element
+    cardElement.on('change', function (event) {
+        const displayError = document.getElementById('cardErrors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+            displayError.style.display = 'block';
+        } else {
+            displayError.textContent = '';
+            displayError.style.display = 'none';
+        }
+    });
+
     // Get parameters from URL
     const urlParams = new URLSearchParams(window.location.search);
     const amount = urlParams.get('amount');
@@ -13,28 +42,6 @@ window.onload = function () {
     if (mobileNumber) {
         document.querySelectorAll('.payment-mobile-number').forEach(field => {
             field.value = mobileNumber;
-        });
-    }
-
-    // Card number formatting
-    const cardNumberInput = document.getElementById('cardNumber');
-    if (cardNumberInput) {
-        cardNumberInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '').slice(0, 16);
-            value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-            e.target.value = value;
-        });
-    }
-
-    // Expiry date formatting
-    const expiryDateInput = document.getElementById('expiryDate');
-    if (expiryDateInput) {
-        expiryDateInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '').slice(0, 4);
-            if (value.length > 2) {
-                value = value.slice(0, 2) + '/' + value.slice(2);
-            }
-            e.target.value = value;
         });
     }
 
@@ -62,45 +69,59 @@ window.onload = function () {
                 let accountDetail = '';
                 const amount = form.querySelector('[name="amount"]').value;
                 const mobileNumber = form.querySelector('[name="mobileNumber"]').value;
-
-                switch (form.id) {
-                    case 'cardPaymentFormElement':
-                        method = 'Card Payment';
-                        accountDetail = document.getElementById('cardNumber').value;
-                        break;
-                    case 'upiPaymentFormElement':
-                        method = 'UPI Payment';
-                        accountDetail = document.getElementById('upiId').value;
-                        break;
-                    case 'netBankingFormElement':
-                        method = 'Net Banking';
-                        accountDetail = document.getElementById('accountNumber').value;
-                        break;
-                    case 'mobileWalletFormElement':
-                        method = 'Mobile Wallet';
-                        accountDetail = document.getElementById('walletNumber').value;
-                        break;
-                }
+                let paymentMethodId = null;
 
                 const submitBtn = form.querySelector('button[type="submit"]');
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
                 submitBtn.disabled = true;
 
-                // Prepare transaction data to match the Transaction entity
-                const transactionData = {
-                    amount: parseFloat(amount),
-                    transactionType: method,
-                    accountDetail: accountDetail,
-                    user: {
-                        mobileNumber: mobileNumber
-                    }
-                };
-
-                console.log('Sending transaction data:', transactionData);
-
                 try {
+                    if (form.id === 'cardPaymentFormElement') {
+                        method = 'Card Payment';
+
+                        // Create a payment method using Stripe
+                        const { paymentMethod, error } = await stripe.createPaymentMethod({
+                            type: 'card',
+                            card: cardElement,
+                        });
+
+                        if (error) {
+                            throw new Error(error.message);
+                        }
+
+                        paymentMethodId = paymentMethod.id;
+                        accountDetail = paymentMethod.card.last4; // Last 4 digits of the card
+                    } else {
+                        switch (form.id) {
+                            case 'upiPaymentFormElement':
+                                method = 'UPI Payment';
+                                accountDetail = document.getElementById('upiId').value;
+                                break;
+                            case 'netBankingFormElement':
+                                method = 'Net Banking';
+                                accountDetail = document.getElementById('accountNumber').value;
+                                break;
+                            case 'mobileWalletFormElement':
+                                method = 'Mobile Wallet';
+                                accountDetail = document.getElementById('walletNumber').value;
+                                break;
+                        }
+                    }
+
+                    // Prepare transaction data to match the Transaction entity
+                    const transactionData = {
+                        amount: parseFloat(amount),
+                        transactionType: method,
+                        accountDetail: accountDetail,
+                        user: {
+                            mobileNumber: mobileNumber
+                        }
+                    };
+
+                    console.log('Sending transaction data:', transactionData);
+
                     // Send transaction data to the backend
-                    const response = await fetch('http://localhost:8083/api/transactions/save', {
+                    const response = await fetch('http://localhost:8083/api/transactions/save' + (paymentMethodId ? `?paymentMethodId=${paymentMethodId}` : ''), {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -121,9 +142,15 @@ window.onload = function () {
                     }, 1000);
                 } catch (error) {
                     console.error('Error saving transaction:', error);
-                    alert('Failed to process payment. Please try again.');
+                    alert('Failed to process payment. Please try again: ' + error.message);
                     submitBtn.innerHTML = '<i class="bi bi-wallet me-2"></i>Pay Now';
                     submitBtn.disabled = false;
+
+                    if (form.id === 'cardPaymentFormElement') {
+                        const displayError = document.getElementById('cardErrors');
+                        displayError.textContent = error.message;
+                        displayError.style.display = 'block';
+                    }
                 }
             });
         }
