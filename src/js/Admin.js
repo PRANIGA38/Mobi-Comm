@@ -219,7 +219,7 @@ function getDaysUntil(dateString) {
     today.setHours(0, 0, 0, 0);
     targetDate.setHours(0, 0, 0, 0);
     const diffMs = targetDate - today;
-    return Math.floor(diffMs / (1000 * 60 W * 60 * 24));
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
 
 function scrollToTop() {
