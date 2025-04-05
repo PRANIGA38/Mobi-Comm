@@ -10,6 +10,11 @@ const addSubscriberForm = document.getElementById('addSubscriberForm');
 const sidebarToggle = document.getElementById('sidebarToggle');
 const mobileSidebar = document.querySelector('.sidebar');
 const rechargeHistoryTable = document.getElementById('subscriber-recharge-history-table');
+const logoutModal = document.getElementById('logoutModal');
+const logoutButton = document.getElementById('logout');
+const confirmLogoutButton = document.getElementById('confirmLogout');
+const cancelLogoutButton = document.getElementById('cancelLogout');
+const closeModal = document.querySelector('#logoutModal .close');
 
 // Pagination settings
 const itemsPerPage = 10;
@@ -99,7 +104,6 @@ function renderSubscribers() {
             <td>
                 <button class="btn btn-primary btn-sm" onclick="openSubscriberDetails(${subscriber.id})">View</button>
                 <button class="btn btn-secondary btn-sm" onclick="toggleSubscriberStatus(${subscriber.id})">${subscriber.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteSubscriber(${subscriber.id})">Delete</button>
             </td>
         `;
         subscribersList.appendChild(row);
@@ -221,17 +225,7 @@ async function toggleSubscriberStatus(id) {
     }
 }
 
-async function deleteSubscriber(id) {
-    if (confirm('Are you sure you want to delete this subscriber?')) {
-        try {
-            await fetchWithAuth(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
-            fetchSubscribers();
-        } catch (error) {
-            console.error('Error deleting subscriber:', error);
-            alert('Failed to delete subscriber');
-        }
-    }
-}
+
 
 // Event listeners
 window.addEventListener('DOMContentLoaded', () => {
@@ -248,10 +242,32 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    window.onclick = (event) => {
+    // Logout functionality
+    logoutButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        logoutModal.style.display = 'block';
+    });
+
+    closeModal.addEventListener('click', () => {
+        logoutModal.style.display = 'none';
+    });
+
+    cancelLogoutButton.addEventListener('click', () => {
+        logoutModal.style.display = 'none';
+    });
+
+    confirmLogoutButton.addEventListener('click', () => {
+        localStorage.removeItem('jwtToken');
+        window.location.href = '/src/pages/MobilePrepaid.html';
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target === logoutModal) {
+            logoutModal.style.display = 'none';
+        }
         const addModal = document.getElementById('addSubscriberModal');
         const detailsModal = document.getElementById('subscriberDetailsModal');
         if (event.target === addModal) closeAddSubscriberModal();
         if (event.target === detailsModal) closeSubscriberDetailsModal();
-    };
+    });
 });

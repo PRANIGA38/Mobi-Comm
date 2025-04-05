@@ -154,4 +154,68 @@ table {
         margin-left: 0;
         width: 100%;
     }
+}.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content .close {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+
+.modal-content p {
+    margin: 20px 0;
+    text-align: center;
+    font-size: 18px;
+    color: #333;
+}
+
+.modal-content button {
+    display: inline-block;
+    padding: 8px 20px;
+    margin: 10px 5px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#confirmLogout {
+    background-color: var(--danger);
+    color: white;
+}
+
+#confirmLogout:hover {
+    background-color: #c82333;
+}
+
+#cancelLogout {
+    background-color: var(--light);
+    color: var(--dark);
+}
+
+#cancelLogout:hover {
+    background-color: #e0e0e0;
 }

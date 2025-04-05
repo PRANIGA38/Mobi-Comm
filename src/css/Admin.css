@@ -412,6 +412,8 @@ body {
 .modal-content p {
     margin: 20px 0;
     text-align: center;
+    font-size: 18px;
+    color: #333;
 }
 
 .modal-content button {
