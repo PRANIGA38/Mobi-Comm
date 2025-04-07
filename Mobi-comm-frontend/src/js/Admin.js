@@ -76,10 +76,9 @@ async function fetchDashboardStats() {
         const statsResponse = await fetchWithAuth(`${API_BASE_URL}/admin/dashboard-stats`);
         if (!statsResponse) return;
         const stats = await statsResponse.json();
-
         document.getElementById('totalSubscribers').textContent = stats.totalSubscribers.toLocaleString();
         document.getElementById('expiringSoon').textContent = stats.expiringSoon;
-        document.getElementById('activePlans').textContent = stats.activePlans;
+        document.getElementById('activePlans').textContent = stats.activatedPlans || stats.activePlans || 'N/A'; 
         document.getElementById('monthlyRevenue').textContent = `₹${(stats.monthlyRevenue / 1000000).toFixed(1)}M`;
     } catch (error) {
         console.error('Error fetching dashboard stats:', error);
