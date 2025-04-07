@@ -10,7 +10,7 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.springboot</groupId>
-	<artifactId>mobi-comm</artifactId>
+	<artifactId>mobicomm</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Mobicomm-prepaid-backend</name>
 	<description>Mobi-comm back-end</description>
