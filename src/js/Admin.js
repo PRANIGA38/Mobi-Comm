@@ -36,7 +36,7 @@ const mobileSidebar = document.getElementById('mobileSidebar');
 const logoutModal = document.getElementById('logoutModal');
 const confirmLogoutButton = document.getElementById('confirmLogout');
 const cancelLogoutButton = document.getElementById('cancelLogout');
-const closeModal = document.querySelector('.modal-content .close');
+const closeModal = document.querySelector('.Logout-Modal-content .close');
 
 // Bootstrap Modal Instance for user modal
 let userModalInstance;
@@ -248,27 +248,46 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const logoutLink = document.querySelector('.menu-item a[href="/src/pages/account.html"]');
-    if (logoutLink && logoutModal) {
-        logoutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            logoutModal.style.display = 'block';
+    // Improved logout event listeners
+    const logoutLinks = document.querySelectorAll('.menu-item a[href="/src/pages/account.html"]');
+    if (logoutLinks.length > 0 && logoutModal) {
+        logoutLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                logoutModal.style.display = 'block';
+                console.log('Logout modal displayed');
+            });
         });
     }
 
-    if (closeModal && logoutModal) closeModal.onclick = () => logoutModal.style.display = 'none';
-    if (cancelLogoutButton && logoutModal) cancelLogoutButton.onclick = () => logoutModal.style.display = 'none';
+    if (closeModal && logoutModal) closeModal.onclick = () => {
+        logoutModal.style.display = 'none';
+        console.log('Logout modal closed via close button');
+    };
+    if (cancelLogoutButton && logoutModal) cancelLogoutButton.onclick = () => {
+        logoutModal.style.display = 'none';
+        console.log('Logout modal closed via cancel button');
+    };
     if (confirmLogoutButton && logoutModal) {
         confirmLogoutButton.onclick = () => {
-            localStorage.removeItem('jwtToken');
-            logoutModal.style.display = 'none';
-            window.location.href = '/src/pages/MobilePrepaid.html';
+            try {
+                localStorage.removeItem('jwtToken');
+                logoutModal.style.display = 'none';
+                console.log('Logged out and redirected');
+                window.location.href = '/src/pages/MobilePrepaid.html';
+            } catch (error) {
+                console.error('Error during logout:', error);
+                showPopup('Failed to log out. Please try again.', false);
+            }
         };
     }
 
     if (logoutModal) {
         window.onclick = (event) => {
-            if (event.target === logoutModal) logoutModal.style.display = 'none';
+            if (event.target === logoutModal) {
+                logoutModal.style.display = 'none';
+                console.log('Logout modal closed via background click');
+            }
         };
     }
 

@@ -35,7 +35,7 @@ const logoutModal = document.getElementById('logoutModal');
 const logoutButton = document.getElementById('logout');
 const confirmLogoutButton = document.getElementById('confirmLogout');
 const cancelLogoutButton = document.getElementById('cancelLogout');
-const closeModal = document.querySelector('.modal-content .close');
+const closeModal = document.querySelector('.Logout-Modal-content .close');
 const categoriesTable = document.getElementById('categories-table');
 const categoriesPaginationControls = document.getElementById('categories-pagination-controls');
 const isHotDealSelect = document.getElementById('plan-is-hot-deal');
@@ -84,25 +84,32 @@ async function fetchPlans(category = 'all') {
         const url = category === 'all' ? `${API_BASE_URL}/admin/plans` : `${API_BASE_URL}/admin/plans?category=${category}`;
         const response = await fetchWithAuth(url);
         allPlans = await response.json();
-        currentPagePlans = 1;
-        displayPlansWithPagination();
+        console.log('Fetched plans for category:', category, allPlans); // Debug log
+        currentPagePlans = 1; // Reset to first page when filtering
+        displayPlansWithPagination(category);
     } catch (error) {
         console.error('Error fetching plans:', error);
         plansTable.innerHTML = `<tr><td colspan="7" class="text-center py-3">Error loading plans</td></tr>`;
     }
 }
 
-function displayPlansWithPagination() {
+function displayPlansWithPagination(category) {
     if (allPlans.length === 0) {
         plansTable.innerHTML = `<tr><td colspan="7" class="text-center py-3">No plans found for this category</td></tr>`;
         paginationControls.innerHTML = '';
         return;
     }
 
-    totalPagesPlans = Math.ceil(allPlans.length / PLANS_PER_PAGE);
+    // Client-side filtering as a fallback
+    let filteredPlans = category === 'all' ? allPlans : allPlans.filter(plan => {
+        return plan.categories && plan.categories.some(cat => cat.name === category.toLowerCase());
+    });
+    console.log('Filtered plans for category:', category, filteredPlans); // Debug log
+
+    totalPagesPlans = Math.ceil(filteredPlans.length / PLANS_PER_PAGE);
     const startIndex = (currentPagePlans - 1) * PLANS_PER_PAGE;
     const endIndex = startIndex + PLANS_PER_PAGE;
-    const paginatedPlans = allPlans.slice(startIndex, endIndex);
+    const paginatedPlans = filteredPlans.slice(startIndex, endIndex);
 
     plansTable.innerHTML = '';
     paginatedPlans.forEach(plan => {
@@ -146,7 +153,7 @@ function renderPlansPaginationControls() {
         e.preventDefault();
         if (currentPagePlans > 1) {
             currentPagePlans--;
-            displayPlansWithPagination();
+            displayPlansWithPagination(category);
         }
     });
     paginationControls.appendChild(prevLi);
@@ -158,7 +165,7 @@ function renderPlansPaginationControls() {
         pageLi.addEventListener('click', (e) => {
             e.preventDefault();
             currentPagePlans = i;
-            displayPlansWithPagination();
+            displayPlansWithPagination(category);
         });
         paginationControls.appendChild(pageLi);
     }
@@ -170,7 +177,7 @@ function renderPlansPaginationControls() {
         e.preventDefault();
         if (currentPagePlans < totalPagesPlans) {
             currentPagePlans++;
-            displayPlansWithPagination();
+            displayPlansWithPagination(category);
         }
     });
     paginationControls.appendChild(nextLi);
@@ -275,7 +282,7 @@ function renderCategoryFilters() {
     allCategories.forEach(category => {
         const button = document.createElement('button');
         button.className = 'btn btn-outline-primary category-btn';
-        button.setAttribute('data-category', category.name);
+        button.setAttribute('data-category', category.name.toLowerCase()); // Ensure lowercase for consistency
         button.textContent = `${category.name.charAt(0).toUpperCase() + category.name.slice(1)} Plans`;
         categoryButtonsContainer.appendChild(button);
     });
@@ -285,19 +292,20 @@ function renderCategoryFilters() {
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
             const category = button.getAttribute('data-category');
-            fetchPlans(category);
+            fetchPlans(category); // Fetch plans with the selected category
+            console.log('Filtering by category:', category); // Debug log
         });
     });
 }
 
 function renderPlanCategoryCheckboxes() {
     planCategoriesDropdown.innerHTML = '';
-    allCategories.filter(category => category.isActive).forEach(category => { // Only active categories
+    allCategories.filter(category => category.isActive).forEach(category => {
         const li = document.createElement('li');
         li.className = 'dropdown-item';
         li.innerHTML = `
             <div class="form-check">
-                <input class="form-check-input category-checkbox" type="checkbox" value="${category.name}" id="category-${category.name}">
+                <input class="form-check-input category-checkbox" type="checkbox" value="${category.name.toLowerCase()}" id="category-${category.name}">
                 <label class="form-check-label" for="category-${category.name}">
                     ${category.name.charAt(0).toUpperCase() + category.name.slice(1)} Plans
                 </label>
@@ -491,6 +499,7 @@ async function toggleCategoryStatus(categoryId) {
         alert(error.message);
     }
 }
+
 // Event Listeners
 addPlanBtn.addEventListener('click', () => openPlanModal());
 planForm.addEventListener('submit', savePlan);
@@ -505,19 +514,29 @@ document.addEventListener('click', (e) => {
     if (mobileSidebar.classList.contains('show') && !mobileSidebar.contains(e.target) && e.target !== sidebarToggle) {
         mobileSidebar.classList.remove('show');
     }
+    if (e.target === logoutModal) {
+        logoutModal.style.display = 'none';
+    }
 });
 
 logoutButton.addEventListener('click', (e) => {
     e.preventDefault();
     logoutModal.style.display = 'block';
+    console.log('Logout modal displayed');
 });
 
-closeModal.onclick = () => logoutModal.style.display = 'none';
-cancelLogoutButton.onclick = () => logoutModal.style.display = 'none';
-confirmLogoutButton.onclick = () => {
+closeModal.addEventListener('click', () => {
+    logoutModal.style.display = 'none';
+    console.log('Logout modal closed via close button');
+});
+
+cancelLogoutButton.addEventListener('click', () => {
+    logoutModal.style.display = 'none';
+    console.log('Logout modal closed via cancel button');
+});
+
+confirmLogoutButton.addEventListener('click', () => {
     localStorage.removeItem('jwtToken');
     window.location.href = '/src/pages/MobilePrepaid.html';
-};
-window.onclick = (event) => {
-    if (event.target === logoutModal) logoutModal.style.display = 'none';
-};
+    console.log('Logged out and redirected');
+});

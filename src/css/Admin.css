@@ -378,7 +378,8 @@ body {
     margin-bottom: 0;
     padding: 5px 10px;
 }
-.modal {
+/* Logout Modal */
+.Logout-Modal {
     display: none;
     position: fixed;
     z-index: 1000;
@@ -389,7 +390,7 @@ body {
     background-color: rgba(0, 0, 0, 0.5);
 }
 
-.modal-content {
+.Logout-Modal-content {
     background-color: white;
     margin: 15% auto;
     padding: 20px;
@@ -398,9 +399,10 @@ body {
     max-width: 400px;
     position: relative;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    text-align: center; /* Center the content */
 }
 
-.modal-content .close {
+.Logout-Modal-content .close {
     position: absolute;
     right: 15px;
     top: 10px;
@@ -409,14 +411,15 @@ body {
     color: #666;
 }
 
-.modal-content p {
+.Logout-Modal-content p {
     margin: 20px 0;
     text-align: center;
     font-size: 18px;
     color: #333;
+    display: block; /* Ensure the paragraph is visible */
 }
 
-.modal-content button {
+.Logout-Modal-content button {
     display: inline-block;
     padding: 8px 20px;
     margin: 10px 5px;
@@ -424,6 +427,10 @@ body {
     border: none;
     cursor: pointer;
     transition: all 0.3s;
+    font-size: 16px;
+    text-align: center;
+    text-decoration: none;
+    outline: none;
 }
 
 #confirmLogout {
