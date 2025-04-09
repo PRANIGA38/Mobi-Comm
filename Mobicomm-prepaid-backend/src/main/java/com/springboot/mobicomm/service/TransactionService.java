@@ -1,5 +1,8 @@
 package com.springboot.mobicomm.service;
 
+import com.razorpay.Order;
+import com.razorpay.RazorpayClient;
+import com.razorpay.RazorpayException;
 import com.springboot.mobicomm.entity.Plan;
 import com.springboot.mobicomm.entity.Recharge;
 import com.springboot.mobicomm.entity.RechargeHistory;
@@ -10,22 +13,37 @@ import com.springboot.mobicomm.repository.RechargeHistoryRepository;
 import com.springboot.mobicomm.repository.RechargeRepository;
 import com.springboot.mobicomm.repository.TransactionRepository;
 import com.springboot.mobicomm.repository.UserPlanRepository;
-import com.stripe.exception.StripeException;
-import com.stripe.model.PaymentIntent;
-import com.stripe.model.PaymentMethod;
-import com.stripe.param.PaymentIntentCreateParams;
+
+import jakarta.annotation.PostConstruct;
+
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
 public class TransactionService {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
+
+    @Value("${rzp.key.id}")
+    private String rzpKeyId;
+
+    @Value("${rzp.key.secret}")
+    private String rzpKeySecret;
+
+    @Value("${rzp.currency}")
+    private String rzpCurrency;
+
+    @Value("${rzp.company.name}")
+    private String rzpCompanyName;
 
     @Autowired
     private TransactionRepository transactionRepository;
@@ -42,8 +60,20 @@ public class TransactionService {
     @Autowired
     private UserPlanRepository userPlanRepository;
 
-    public Transaction saveTransaction(Transaction transaction, String paymentMethodId) throws StripeException {
-        logger.info("Received transaction: {}", transaction);
+    private RazorpayClient razorpayClient;
+
+    @PostConstruct
+    public void init() {
+        try {
+            razorpayClient = new RazorpayClient(rzpKeyId, rzpKeySecret);
+        } catch (RazorpayException e) {
+            logger.error("Failed to initialize Razorpay client: {}", e.getMessage());
+            throw new RuntimeException("Razorpay initialization failed: " + e.getMessage());
+        }
+    }
+
+    public Map<String, Object> saveTransaction(Transaction transaction, String paymentMethodId) {
+        logger.info("Received transaction: {}, paymentMethodId: {}", transaction, paymentMethodId);
 
         // Extract mobileNumber from the user object
         if (transaction.getUser() == null || transaction.getUser().getMobileNumber() == null) {
@@ -79,35 +109,33 @@ public class TransactionService {
         transaction.ensurePaymentMethod();
         logger.info("Transaction after setting paymentMethod: {}", transaction);
 
-        // Process payment with Stripe if it's a card payment
+        // Prepare response map
+        Map<String, Object> response = new HashMap<>();
+
+        // Process Razorpay payment for "Card Payment"
         if ("Card Payment".equals(transaction.getTransactionType()) && paymentMethodId != null) {
-            logger.info("Creating Stripe PaymentIntent for amount: {}", transaction.getAmount());
-            PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-                    .setAmount((long) (transaction.getAmount() * 100)) // Amount in cents
-                    .setCurrency("inr")
-                    .setPaymentMethod(paymentMethodId)
-                    // Do NOT setConfirm(true) here; let the frontend confirm
-                    .setAutomaticPaymentMethods(
-                            PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
-                                    .setEnabled(true)
-                                    .setAllowRedirects(PaymentIntentCreateParams.AutomaticPaymentMethods.AllowRedirects.NEVER) // Disable redirects
-                                    .build()
-                    )
-                    .build();
+            try {
+                logger.info("Processing Razorpay payment for amount: {}", transaction.getAmount());
 
-            PaymentIntent paymentIntent = PaymentIntent.create(params);
-            logger.info("Created PaymentIntent: {}", paymentIntent.getId());
+                // Create a Razorpay order
+                JSONObject orderRequest = new JSONObject();
+                orderRequest.put("amount", (long) (transaction.getAmount() * 100)); // Amount in paise (smallest unit)
+                orderRequest.put("currency", rzpCurrency);
+                orderRequest.put("receipt", "receipt_" + System.currentTimeMillis()); // Unique receipt ID
+                orderRequest.put("notes", new JSONObject().put("company", rzpCompanyName));
 
-            // Fetch the PaymentMethod directly to get card details
-            PaymentMethod paymentMethod = PaymentMethod.retrieve(paymentMethodId);
-            if (paymentMethod.getCard() != null) {
-                transaction.setAccountDetail("**** **** **** " + paymentMethod.getCard().getLast4());
-            } else {
-                logger.warn("PaymentMethod does not have card details for paymentMethodId: {}", paymentMethodId);
-                transaction.setAccountDetail("**** **** **** Unknown");
+                Order order = razorpayClient.orders.create(orderRequest);
+                String orderId = order.get("id");
+                logger.info("Razorpay order created: Order ID: {}", orderId);
+
+                // Simulate successful payment for dummy testing (no actual payment capture needed in test mode)
+                response.put("status", "succeeded");
+                response.put("orderId", orderId);
+                response.put("transaction", transaction);
+            } catch (RazorpayException e) {
+                logger.error("Razorpay payment failed: {}", e.getMessage(), e);
+                throw new RuntimeException("Payment failed: " + e.getMessage());
             }
-
-            transaction.setClientSecret(paymentIntent.getClientSecret()); // Set the client secret to return to frontend
         }
 
         // Fetch the plan based on the transaction amount
@@ -157,6 +185,6 @@ public class TransactionService {
         rechargeRepository.save(user);
         logger.info("Updated user with currentPlan: {} and planExpiryDate: {}", user.getCurrentPlan(), user.getPlanExpiryDate());
 
-        return savedTransaction;
+        return response;
     }
 }

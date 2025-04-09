@@ -1,33 +1,15 @@
-// Initialize Stripe with your publishable key
-const stripe = Stripe('pk_test_51R7foIQsXpFEKVlGzFzF2iHH3WW6RdOaYjGaF10rnCdrPSAiYv3H9eHS9SXDdrowS7pcZZassZyKR3BcgQ4uAf6d00hzNp9vBQ');
-const elements = stripe.elements();
-
-// Create an instance of the card Element
-const cardElement = elements.create('card', {
-    style: {
-        base: {
-            fontSize: '16px',
-            color: '#32325d',
-        },
-    },
-});
+// Initialize Razorpay with your publishable key
+const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+    });
+};
 
 window.onload = function () {
-    // Mount Stripe Elements
-    cardElement.mount('#cardElement');
-
-    // Handle real-time validation errors from the card Element
-    cardElement.on('change', function (event) {
-        const displayError = document.getElementById('cardErrors');
-        if (event.error) {
-            displayError.textContent = event.error.message;
-            displayError.style.display = 'block';
-        } else {
-            displayError.textContent = '';
-            displayError.style.display = 'none';
-        }
-    });
-
     // Get parameters from URL
     const urlParams = new URLSearchParams(window.location.search);
     const amount = urlParams.get('amount');
@@ -79,33 +61,22 @@ window.onload = function () {
                     if (form.id === 'cardPaymentFormElement') {
                         method = 'Card Payment';
 
-                        // Create a payment method using Stripe
-                        const { paymentMethod, error } = await stripe.createPaymentMethod({
-                            type: 'card',
-                            card: cardElement,
-                        });
-
-                        if (error) {
-                            throw new Error(error.message);
+                        // Load Razorpay Checkout script
+                        const res = await loadRazorpayScript();
+                        if (!res) {
+                            throw new Error('Razorpay SDK failed to load');
                         }
-
-                        paymentMethodId = paymentMethod.id;
-                        accountDetail = paymentMethod.card.last4;
 
                         // Prepare transaction data
                         const transactionData = {
                             amount: parseFloat(amount),
                             transactionType: method,
-                            accountDetail: accountDetail,
-                            user: {
-                                mobileNumber: mobileNumber
-                            }
+                            accountDetail: accountDetail, // Can be updated with card details later if needed
+                            user: { mobileNumber: mobileNumber }
                         };
 
-                        console.log('Sending transaction data:', transactionData);
-
-                        // Send transaction data to the backend
-                        const response = await fetch('http://localhost:8083/api/transactions/save?paymentMethodId=' + paymentMethodId, {
+                        // Create Razorpay order via backend API
+                        const response = await fetch(`http://localhost:8083/api/transactions/save`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -114,24 +85,43 @@ window.onload = function () {
                             body: JSON.stringify(transactionData)
                         });
 
-                        // Check if the response is OK before parsing JSON
+                        const responseData = await response.json();
+
                         if (!response.ok) {
-                            const errorText = await response.text();
-                            console.error('Server response:', errorText);
-                            throw new Error('Failed to save transaction: ' + errorText);
+                            throw new Error(responseData.error || 'Failed to create order');
                         }
 
-                        const result = await response.json();
+                        if (responseData.status === 'succeeded' && responseData.orderId) {
+                            const options = {
+                                key: 'rzp_test_0QasdfVab6AeJ', // Replace with your Razorpay Key ID
+                                amount: amount * 100, // Amount in paise
+                                currency: 'INR',
+                                name: 'Mobi-Comm',
+                                description: 'Test Transaction',
+                                order_id: responseData.orderId,
+                                handler: function (response) {
+                                    // Simulate success for dummy payment
+                                    setTimeout(() => {
+                                        window.location.href = `receipt.html?amount=${encodeURIComponent(amount)}&method=${encodeURIComponent(method)}&accountDetail=${encodeURIComponent(accountDetail)}&mobile=${encodeURIComponent(mobileNumber)}`;
+                                    }, 1000);
+                                },
+                                prefill: {
+                                    name: 'Test User',
+                                    email: 'test@example.com',
+                                    contact: mobileNumber
+                                },
+                                notes: {
+                                    address: 'Test Address'
+                                },
+                                theme: {
+                                    color: '#004A55'
+                                }
+                            };
 
-                        // Confirm the PaymentIntent on the frontend
-                        if (result.clientSecret) {
-                            const { error: confirmError } = await stripe.confirmCardPayment(result.clientSecret, {
-                                payment_method: paymentMethodId
-                            });
-
-                            if (confirmError) {
-                                throw new Error(confirmError.message);
-                            }
+                            const rzp1 = new Razorpay(options);
+                            rzp1.open();
+                        } else {
+                            throw new Error('Unexpected response status: ' + responseData.status);
                         }
                     } else {
                         switch (form.id) {
@@ -148,53 +138,20 @@ window.onload = function () {
                                 accountDetail = document.getElementById('walletNumber').value;
                                 break;
                         }
-
-                        // Prepare transaction data for non-card payments
-                        const transactionData = {
-                            amount: parseFloat(amount),
-                            transactionType: method,
-                            accountDetail: accountDetail,
-                            user: {
-                                mobileNumber: mobileNumber
-                            }
-                        };
-
-                        console.log('Sending transaction data:', transactionData);
-
-                        // Send transaction data to the backend
-                        const response = await fetch('http://localhost:8083/api/transactions/save', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
-                            },
-                            body: JSON.stringify(transactionData)
-                        });
-
-                        if (!response.ok) {
-                            const errorText = await response.text();
-                            console.error('Server response:', errorText);
-                            throw new Error('Failed to save transaction: ' + errorText);
-                        }
-
-                        await response.json(); // Parse response for non-card payments
+                        // Handle non-card payments (can be extended later)
+                        alert('Payment method not fully implemented yet for ' + method);
                     }
-
-                    // Redirect to receipt page after successful transaction
-                    setTimeout(() => {
-                        window.location.href = `receipt.html?amount=${encodeURIComponent(amount)}&method=${encodeURIComponent(method)}&accountDetail=${encodeURIComponent(accountDetail)}&mobile=${encodeURIComponent(mobileNumber)}`;
-                    }, 1000);
                 } catch (error) {
-                    console.error('Error saving transaction:', error);
-                    alert('Failed to process payment. Please try again: ' + error.message);
-                    submitBtn.innerHTML = '<i class="bi bi-wallet me-2"></i>Pay Now';
-                    submitBtn.disabled = false;
-
-                    if (form.id === 'cardPaymentFormElement') {
-                        const displayError = document.getElementById('cardErrors');
+                    console.error('Error processing payment:', error);
+                    const displayError = document.getElementById('cardErrors');
+                    if (form.id === 'cardPaymentFormElement' && displayError) {
                         displayError.textContent = error.message;
                         displayError.style.display = 'block';
+                    } else {
+                        alert('Failed to process payment. Please try again.');
                     }
+                    submitBtn.innerHTML = '<i class="bi bi-wallet me-2"></i>Pay Now';
+                    submitBtn.disabled = false;
                 }
             });
         }
