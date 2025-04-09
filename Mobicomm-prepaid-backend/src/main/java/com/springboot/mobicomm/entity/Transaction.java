@@ -42,6 +42,9 @@ public class Transaction {
     @Column
     private String clientSecret;
 
+    @Column(name = "order_id")
+    private String orderId; // Store Razorpay order ID
+
     public void setTransactionType(String transactionType) {
         this.transactionType = transactionType;
         this.paymentMethod = transactionType;
@@ -60,5 +63,14 @@ public class Transaction {
 
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
+    }
+
+    // Getter and Setter for orderId
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
     }
 }

@@ -3,19 +3,8 @@ package com.springboot.mobicomm.service;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
-import com.springboot.mobicomm.entity.Plan;
-import com.springboot.mobicomm.entity.Recharge;
-import com.springboot.mobicomm.entity.RechargeHistory;
-import com.springboot.mobicomm.entity.Transaction;
-import com.springboot.mobicomm.entity.UserPlan;
-import com.springboot.mobicomm.repository.PlanRepository;
-import com.springboot.mobicomm.repository.RechargeHistoryRepository;
-import com.springboot.mobicomm.repository.RechargeRepository;
-import com.springboot.mobicomm.repository.TransactionRepository;
-import com.springboot.mobicomm.repository.UserPlanRepository;
-
-import jakarta.annotation.PostConstruct;
-
+import com.springboot.mobicomm.entity.*;
+import com.springboot.mobicomm.repository.*;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,16 +23,16 @@ public class TransactionService {
 
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
-    @Value("${rzp.key.id}")
+    @Value("${razorpay.key_id}")
     private String rzpKeyId;
 
-    @Value("${rzp.key.secret}")
+    @Value("${razorpay.key_secret}")
     private String rzpKeySecret;
 
-    @Value("${rzp.currency}")
+    @Value("${rzp.currency:INR}")
     private String rzpCurrency;
 
-    @Value("${rzp.company.name}")
+    @Value("${rzp.company.name:Mobi-Comm}")
     private String rzpCompanyName;
 
     @Autowired
@@ -65,7 +55,11 @@ public class TransactionService {
     @PostConstruct
     public void init() {
         try {
+            if (rzpKeyId == null || rzpKeyId.isEmpty() || rzpKeySecret == null || rzpKeySecret.isEmpty()) {
+                throw new IllegalStateException("Razorpay key_id or key_secret is not configured");
+            }
             razorpayClient = new RazorpayClient(rzpKeyId, rzpKeySecret);
+            logger.info("Razorpay client initialized successfully with key_id: {}", rzpKeyId);
         } catch (RazorpayException e) {
             logger.error("Failed to initialize Razorpay client: {}", e.getMessage());
             throw new RuntimeException("Razorpay initialization failed: " + e.getMessage());
@@ -73,18 +67,17 @@ public class TransactionService {
     }
 
     public Map<String, Object> saveTransaction(Transaction transaction, String paymentMethodId) {
-        logger.info("Received transaction: {}, paymentMethodId: {}", transaction, paymentMethodId);
+        logger.info("Received transaction: amount={}, transactionType={}, paymentMethod={}, accountDetail={}",
+                transaction.getAmount(), transaction.getTransactionType(), transaction.getPaymentMethod(), transaction.getAccountDetail());
 
-        // Extract mobileNumber from the user object
         if (transaction.getUser() == null || transaction.getUser().getMobileNumber() == null) {
-            logger.error("Mobile number is required in the transaction: {}", transaction);
+            logger.error("Mobile number is required in the transaction");
             throw new IllegalArgumentException("Mobile number is required");
         }
 
         String mobileNumber = transaction.getUser().getMobileNumber();
         logger.info("Looking up user with mobile number: {}", mobileNumber);
 
-        // Find the user by mobile number
         Optional<Recharge> userOptional = rechargeRepository.findByMobileNumber(mobileNumber);
         if (userOptional.isEmpty()) {
             logger.error("User not found with mobile number: {}", mobileNumber);
@@ -92,53 +85,44 @@ public class TransactionService {
         }
 
         Recharge user = userOptional.get();
-        logger.info("Found user: {}", user);
+        logger.info("Found user with mobile number: {}", mobileNumber);
 
-        // Set the user and other computed fields
         transaction.setUser(user);
         transaction.setType("CREDIT");
         transaction.setDate(LocalDate.now());
 
-        // Ensure transactionType is set
         if (transaction.getTransactionType() == null) {
-            logger.error("Transaction type is required in the transaction: {}", transaction);
+            logger.error("Transaction type is required");
             throw new IllegalArgumentException("Transaction type is required");
         }
 
-        // Ensure paymentMethod is set
         transaction.ensurePaymentMethod();
-        logger.info("Transaction after setting paymentMethod: {}", transaction);
+        logger.info("Transaction after setting paymentMethod: amount={}, transactionType={}, paymentMethod={}",
+                transaction.getAmount(), transaction.getTransactionType(), transaction.getPaymentMethod());
 
-        // Prepare response map
         Map<String, Object> response = new HashMap<>();
 
-        // Process Razorpay payment for "Card Payment"
-        if ("Card Payment".equals(transaction.getTransactionType()) && paymentMethodId != null) {
-            try {
-                logger.info("Processing Razorpay payment for amount: {}", transaction.getAmount());
+        try {
+            logger.info("Processing Razorpay payment for amount: {}", transaction.getAmount());
 
-                // Create a Razorpay order
-                JSONObject orderRequest = new JSONObject();
-                orderRequest.put("amount", (long) (transaction.getAmount() * 100)); // Amount in paise (smallest unit)
-                orderRequest.put("currency", rzpCurrency);
-                orderRequest.put("receipt", "receipt_" + System.currentTimeMillis()); // Unique receipt ID
-                orderRequest.put("notes", new JSONObject().put("company", rzpCompanyName));
+            JSONObject orderRequest = new JSONObject();
+            orderRequest.put("amount", (long) (transaction.getAmount() * 100)); // Amount in paise
+            orderRequest.put("currency", rzpCurrency);
+            orderRequest.put("receipt", "receipt_" + System.currentTimeMillis());
+            orderRequest.put("notes", new JSONObject().put("payment_method", transaction.getPaymentMethod()));
 
-                Order order = razorpayClient.orders.create(orderRequest);
-                String orderId = order.get("id");
-                logger.info("Razorpay order created: Order ID: {}", orderId);
+            Order order = razorpayClient.orders.create(orderRequest);
+            String orderId = order.get("id");
+            transaction.setOrderId(orderId);
+            logger.info("Razorpay order created: Order ID: {}", orderId);
 
-                // Simulate successful payment for dummy testing (no actual payment capture needed in test mode)
-                response.put("status", "succeeded");
-                response.put("orderId", orderId);
-                response.put("transaction", transaction);
-            } catch (RazorpayException e) {
-                logger.error("Razorpay payment failed: {}", e.getMessage(), e);
-                throw new RuntimeException("Payment failed: " + e.getMessage());
-            }
+            response.put("status", "succeeded");
+            response.put("orderId", orderId);
+        } catch (RazorpayException e) {
+            logger.error("Razorpay payment failed: {}", e.getMessage(), e);
+            throw new RuntimeException("Payment failed: " + e.getMessage());
         }
 
-        // Fetch the plan based on the transaction amount
         Optional<Plan> planOptional = planRepository.findByPrice(transaction.getAmount());
         if (planOptional.isEmpty()) {
             logger.error("Plan not found for amount: {}", transaction.getAmount());
@@ -147,29 +131,21 @@ public class TransactionService {
 
         Plan plan = planOptional.get();
 
-        // Save the transaction
         Transaction savedTransaction = transactionRepository.save(transaction);
-        logger.info("Saved transaction: {}", savedTransaction);
+        logger.info("Saved transaction with ID: {}", savedTransaction.getId());
 
-        // Create and save a new entry in recharge_history
         RechargeHistory rechargeHistory = new RechargeHistory(
-                user,
-                plan.getName(),
-                savedTransaction.getDate(),
-                savedTransaction.getAmount(),
-                savedTransaction.getPaymentMethod(),
-                "SUCCESS");
+                user, plan.getName(), savedTransaction.getDate(), savedTransaction.getAmount(),
+                savedTransaction.getPaymentMethod(), "SUCCESS");
         rechargeHistoryRepository.save(rechargeHistory);
-        logger.info("Saved recharge history: {}", rechargeHistory);
+        logger.info("Saved recharge history with user: {}", user.getMobileNumber());
 
-        // Deactivate any existing active user plan
         Optional<UserPlan> existingUserPlan = userPlanRepository.findByUserAndIsActiveTrue(user);
         existingUserPlan.ifPresent(userPlan -> {
             userPlan.setIsActive(false);
             userPlanRepository.save(userPlan);
         });
 
-        // Create a new entry in user_plans
         UserPlan userPlan = new UserPlan();
         userPlan.setUser(user);
         userPlan.setPlan(plan);
@@ -177,9 +153,8 @@ public class TransactionService {
         userPlan.setExpirationDate(savedTransaction.getDate().plusDays(plan.getValidity()));
         userPlan.setIsActive(true);
         userPlanRepository.save(userPlan);
-        logger.info("Saved user plan: {}", userPlan);
+        logger.info("Saved user plan with user: {}", user.getMobileNumber());
 
-        // Update the user's current_plan and plan_expiry_date in the users table
         user.setCurrentPlan(plan.getName());
         user.setPlanExpiryDate(savedTransaction.getDate().plusDays(plan.getValidity()));
         rechargeRepository.save(user);

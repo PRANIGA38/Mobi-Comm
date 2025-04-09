@@ -48,7 +48,7 @@ window.onload = function () {
                 event.preventDefault();
 
                 let method = '';
-                let accountDetail = '';
+                let accountDetail = 'N/A';
                 const amount = form.querySelector('[name="amount"]').value;
                 const mobileNumber = form.querySelector('[name="mobileNumber"]').value;
                 let paymentMethodId = null;
@@ -58,88 +58,95 @@ window.onload = function () {
                 submitBtn.disabled = true;
 
                 try {
+                    // Load Razorpay Checkout script
+                    const res = await loadRazorpayScript();
+                    if (!res) {
+                        throw new Error('Razorpay SDK failed to load');
+                    }
+
                     if (form.id === 'cardPaymentFormElement') {
                         method = 'Card Payment';
-
-                        // Load Razorpay Checkout script
-                        const res = await loadRazorpayScript();
-                        if (!res) {
-                            throw new Error('Razorpay SDK failed to load');
-                        }
-
-                        // Prepare transaction data
-                        const transactionData = {
-                            amount: parseFloat(amount),
-                            transactionType: method,
-                            accountDetail: accountDetail, // Can be updated with card details later if needed
-                            user: { mobileNumber: mobileNumber }
-                        };
-
-                        // Create Razorpay order via backend API
-                        const response = await fetch(`http://localhost:8083/api/transactions/save`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
-                            },
-                            body: JSON.stringify(transactionData)
-                        });
-
-                        const responseData = await response.json();
-
-                        if (!response.ok) {
-                            throw new Error(responseData.error || 'Failed to create order');
-                        }
-
-                        if (responseData.status === 'succeeded' && responseData.orderId) {
-                            const options = {
-                                key: 'rzp_test_0QasdfVab6AeJ', // Replace with your Razorpay Key ID
-                                amount: amount * 100, // Amount in paise
-                                currency: 'INR',
-                                name: 'Mobi-Comm',
-                                description: 'Test Transaction',
-                                order_id: responseData.orderId,
-                                handler: function (response) {
-                                    // Simulate success for dummy payment
-                                    setTimeout(() => {
-                                        window.location.href = `receipt.html?amount=${encodeURIComponent(amount)}&method=${encodeURIComponent(method)}&accountDetail=${encodeURIComponent(accountDetail)}&mobile=${encodeURIComponent(mobileNumber)}`;
-                                    }, 1000);
-                                },
-                                prefill: {
-                                    name: 'Test User',
-                                    email: 'test@example.com',
-                                    contact: mobileNumber
-                                },
-                                notes: {
-                                    address: 'Test Address'
-                                },
-                                theme: {
-                                    color: '#004A55'
-                                }
-                            };
-
-                            const rzp1 = new Razorpay(options);
-                            rzp1.open();
-                        } else {
-                            throw new Error('Unexpected response status: ' + responseData.status);
-                        }
                     } else {
                         switch (form.id) {
                             case 'upiPaymentFormElement':
                                 method = 'UPI Payment';
-                                accountDetail = document.getElementById('upiId').value;
+                                accountDetail = document.getElementById('upiId')?.value || 'N/A';
                                 break;
                             case 'netBankingFormElement':
                                 method = 'Net Banking';
-                                accountDetail = document.getElementById('accountNumber').value;
+                                accountDetail = document.getElementById('accountNumber')?.value || 'N/A';
                                 break;
                             case 'mobileWalletFormElement':
                                 method = 'Mobile Wallet';
-                                accountDetail = document.getElementById('walletNumber').value;
+                                accountDetail = document.getElementById('walletNumber')?.value || 'N/A';
                                 break;
                         }
-                        // Handle non-card payments (can be extended later)
-                        alert('Payment method not fully implemented yet for ' + method);
+                    }
+
+                    // Prepare transaction data
+                    const transactionData = {
+                        amount: parseFloat(amount),
+                        transactionType: method,
+                        paymentMethod: method,
+                        accountDetail: accountDetail,
+                        user: { mobileNumber: mobileNumber }
+                    };
+
+                    // Create Razorpay order via backend API
+                    const response = await fetch('http://localhost:8083/api/transactions/save', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('jwtToken') || ''}` // Ensure token is present
+                        },
+                        body: JSON.stringify(transactionData)
+                    });
+
+                    const responseData = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(responseData.error || `HTTP error! status: ${response.status}`);
+                    }
+
+                    if (!responseData.status || !responseData.orderId) {
+                        console.log('Response data:', responseData); // Debugging
+                        throw new Error('Invalid response: missing status or orderId');
+                    }
+
+                    if (responseData.status === 'succeeded') {
+                        const options = {
+                            key: 'rzp_test_0QasdfVab6AeJ', // Replace with your actual Razorpay Key ID
+                            amount: amount * 100, // Amount in paise
+                            currency: 'INR',
+                            name: 'Mobi-Comm',
+                            description: `${method} Transaction`,
+                            order_id: responseData.orderId,
+                            handler: function (response) {
+                                alert('Payment succeeded! Redirecting to receipt...');
+                                setTimeout(() => {
+                                    window.location.href = `receipt.html?amount=${encodeURIComponent(amount)}&method=${encodeURIComponent(method)}&accountDetail=${encodeURIComponent(accountDetail)}&mobile=${encodeURIComponent(mobileNumber)}`;
+                                }, 1000);
+                            },
+                            prefill: {
+                                contact: mobileNumber
+                            },
+                            notes: {
+                                address: 'Test Address'
+                            },
+                            theme: {
+                                color: '#004A55'
+                            },
+                            modal: {
+                                ondismiss: function () {
+                                    alert('Payment was cancelled or failed.');
+                                    submitBtn.innerHTML = '<i class="bi bi-wallet me-2"></i>Pay Now';
+                                    submitBtn.disabled = false;
+                                }
+                            }
+                        };
+
+                        const rzp1 = new Razorpay(options);
+                        rzp1.open();
                     }
                 } catch (error) {
                     console.error('Error processing payment:', error);
@@ -148,7 +155,7 @@ window.onload = function () {
                         displayError.textContent = error.message;
                         displayError.style.display = 'block';
                     } else {
-                        alert('Failed to process payment. Please try again.');
+                        alert('Failed to process payment. Please try again. Error: ' + error.message);
                     }
                     submitBtn.innerHTML = '<i class="bi bi-wallet me-2"></i>Pay Now';
                     submitBtn.disabled = false;
