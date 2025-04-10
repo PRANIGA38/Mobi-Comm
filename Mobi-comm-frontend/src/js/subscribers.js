@@ -196,10 +196,10 @@ addSubscriberForm.addEventListener('submit', async (e) => {
         email: document.getElementById('email').value,
         mobileNumber: document.getElementById('phone').value,
         status: 'ACTIVE',
-        joinDate: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
-        membershipStatus: 'Standard', // Default value
-        role: 'ROLE_USER', // Default role for subscribers
-        password: 'defaultPassword123' // You might want to handle password differently in a real app
+        joinDate: new Date().toISOString().split('T')[0], 
+        membershipStatus: 'Standard', 
+        role: 'ROLE_USER', 
+        password: 'defaultPassword123' 
     };
     console.log('Submitting subscriber:', subscriber); 
     try {

@@ -97,7 +97,7 @@ window.onload = function () {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('jwtToken') || ''}` // Ensure token is present
+                            'Authorization': `Bearer ${localStorage.getItem('jwtToken') || ''}`
                         },
                         body: JSON.stringify(transactionData)
                     });
@@ -109,18 +109,19 @@ window.onload = function () {
                     }
 
                     if (!responseData.status || !responseData.orderId) {
-                        console.log('Response data:', responseData); // Debugging
+                        console.log('Response data:', responseData);
                         throw new Error('Invalid response: missing status or orderId');
                     }
 
                     if (responseData.status === 'succeeded') {
                         const options = {
-                            key: 'rzp_test_0QasdfVab6AeJ', // Replace with your actual Razorpay Key ID
+                            key: 'rzp_test_pRczkWgFWJTWHz', // Updated to match backend
                             amount: amount * 100, // Amount in paise
                             currency: 'INR',
                             name: 'Mobi-Comm',
                             description: `${method} Transaction`,
                             order_id: responseData.orderId,
+                            ...(responseData.sessionToken && { session_token: responseData.sessionToken }), // Optional
                             handler: function (response) {
                                 alert('Payment succeeded! Redirecting to receipt...');
                                 setTimeout(() => {
@@ -138,7 +139,8 @@ window.onload = function () {
                             },
                             modal: {
                                 ondismiss: function () {
-                                    alert('Payment was cancelled or failed.');
+                                    alert('Payment was cancelled or failed. Check console for details.');
+                                    console.error('Payment dismissed');
                                     submitBtn.innerHTML = '<i class="bi bi-wallet me-2"></i>Pay Now';
                                     submitBtn.disabled = false;
                                 }
@@ -146,6 +148,12 @@ window.onload = function () {
                         };
 
                         const rzp1 = new Razorpay(options);
+                        rzp1.on('payment.failed', function (error) {
+                            console.error('Payment failed:', error.error);
+                            alert('Payment failed: ' + error.error.description);
+                            submitBtn.innerHTML = '<i class="bi bi-wallet me-2"></i>Pay Now';
+                            submitBtn.disabled = false;
+                        });
                         rzp1.open();
                     }
                 } catch (error) {

@@ -112,12 +112,17 @@ public class TransactionService {
             orderRequest.put("notes", new JSONObject().put("payment_method", transaction.getPaymentMethod()));
 
             Order order = razorpayClient.orders.create(orderRequest);
+            logger.info("Razorpay order response: {}", order.toJson());
             String orderId = order.get("id");
             transaction.setOrderId(orderId);
-            logger.info("Razorpay order created: Order ID: {}", orderId);
 
+            // Include session token if available (check Razorpay API docs)
+            String sessionToken = order.toJson().has("session_token") ? order.toJson().getString("session_token") : null;
             response.put("status", "succeeded");
             response.put("orderId", orderId);
+            if (sessionToken != null) {
+                response.put("sessionToken", sessionToken);
+            }
         } catch (RazorpayException e) {
             logger.error("Razorpay payment failed: {}", e.getMessage(), e);
             throw new RuntimeException("Payment failed: " + e.getMessage());
