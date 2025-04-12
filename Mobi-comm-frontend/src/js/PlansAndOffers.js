@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     try {
         await fetchWithAuth('http://localhost:8083/api/admin/plans', { method: 'GET' });
-        fetchPlans();
+        fetchPlans('all');
         fetchCategories();
     } catch (error) {
         alert('Access denied: ' + error.message);
@@ -45,17 +45,15 @@ const hotDealPriceDiv = document.getElementById('hot-deal-price');
 const planModalInstance = new bootstrap.Modal(planModal);
 const categoryModalInstance = new bootstrap.Modal(categoryModal);
 
-// Pagination settings for Plans
+// Pagination settings
 const PLANS_PER_PAGE = 5;
 let currentPagePlans = 1;
 let allPlans = [];
-let totalPagesPlans = 1;
+let currentCategory = 'all'; // Track current category filter
 
-// Pagination settings for Categories
 const CATEGORIES_PER_PAGE = 3;
 let currentPageCategories = 1;
 let allCategories = [];
-let totalPagesCategories = 1;
 
 async function fetchWithAuth(url, options = {}) {
     if (!jwtToken) {
@@ -85,28 +83,29 @@ async function fetchPlans(category = 'all') {
         const response = await fetchWithAuth(url);
         allPlans = await response.json();
         console.log('Fetched plans for category:', category, allPlans); // Debug log
+        currentCategory = category; // Update current category
         currentPagePlans = 1; // Reset to first page when filtering
-        displayPlansWithPagination(category);
+        displayPlansWithPagination();
     } catch (error) {
         console.error('Error fetching plans:', error);
         plansTable.innerHTML = `<tr><td colspan="7" class="text-center py-3">Error loading plans</td></tr>`;
     }
 }
 
-function displayPlansWithPagination(category) {
+function displayPlansWithPagination() {
     if (allPlans.length === 0) {
         plansTable.innerHTML = `<tr><td colspan="7" class="text-center py-3">No plans found for this category</td></tr>`;
         paginationControls.innerHTML = '';
         return;
     }
 
-    // Client-side filtering as a fallback
-    let filteredPlans = category === 'all' ? allPlans : allPlans.filter(plan => {
-        return plan.categories && plan.categories.some(cat => cat.name === category.toLowerCase());
-    });
-    console.log('Filtered plans for category:', category, filteredPlans); // Debug log
+    // Filter plans based on current category
+    let filteredPlans = currentCategory === 'all' ? allPlans : allPlans.filter(plan => 
+        plan.categories && plan.categories.some(cat => cat.name === currentCategory.toLowerCase())
+    );
+    console.log('Displaying plans for category:', currentCategory, filteredPlans); // Debug log
 
-    totalPagesPlans = Math.ceil(filteredPlans.length / PLANS_PER_PAGE);
+    const totalPages = Math.ceil(filteredPlans.length / PLANS_PER_PAGE);
     const startIndex = (currentPagePlans - 1) * PLANS_PER_PAGE;
     const endIndex = startIndex + PLANS_PER_PAGE;
     const paginatedPlans = filteredPlans.slice(startIndex, endIndex);
@@ -144,6 +143,11 @@ function displayPlansWithPagination(category) {
 }
 
 function renderPlansPaginationControls() {
+    const filteredPlans = currentCategory === 'all' ? allPlans : allPlans.filter(plan => 
+        plan.categories && plan.categories.some(cat => cat.name === currentCategory.toLowerCase())
+    );
+    const totalPages = Math.ceil(filteredPlans.length / PLANS_PER_PAGE);
+
     paginationControls.innerHTML = '';
 
     const prevLi = document.createElement('li');
@@ -153,31 +157,31 @@ function renderPlansPaginationControls() {
         e.preventDefault();
         if (currentPagePlans > 1) {
             currentPagePlans--;
-            displayPlansWithPagination(category);
+            displayPlansWithPagination();
         }
     });
     paginationControls.appendChild(prevLi);
 
-    for (let i = 1; i <= totalPagesPlans; i++) {
+    for (let i = 1; i <= totalPages; i++) {
         const pageLi = document.createElement('li');
         pageLi.className = `page-item ${i === currentPagePlans ? 'active' : ''}`;
         pageLi.innerHTML = `<a class="page-link" href="#">${i}</a>`;
         pageLi.addEventListener('click', (e) => {
             e.preventDefault();
             currentPagePlans = i;
-            displayPlansWithPagination(category);
+            displayPlansWithPagination();
         });
         paginationControls.appendChild(pageLi);
     }
 
     const nextLi = document.createElement('li');
-    nextLi.className = `page-item ${currentPagePlans === totalPagesPlans ? 'disabled' : ''}`;
+    nextLi.className = `page-item ${currentPagePlans === totalPages ? 'disabled' : ''}`;
     nextLi.innerHTML = `<a class="page-link" href="#" aria-label="Next"><span aria-hidden="true">»</span></a>`;
     nextLi.addEventListener('click', (e) => {
         e.preventDefault();
-        if (currentPagePlans < totalPagesPlans) {
+        if (currentPagePlans < totalPages) {
             currentPagePlans++;
-            displayPlansWithPagination(category);
+            displayPlansWithPagination();
         }
     });
     paginationControls.appendChild(nextLi);
@@ -204,7 +208,7 @@ function displayCategoriesWithPagination() {
         return;
     }
 
-    totalPagesCategories = Math.ceil(allCategories.length / CATEGORIES_PER_PAGE);
+    const totalPages = Math.ceil(allCategories.length / CATEGORIES_PER_PAGE);
     const startIndex = (currentPageCategories - 1) * CATEGORIES_PER_PAGE;
     const endIndex = startIndex + CATEGORIES_PER_PAGE;
     const paginatedCategories = allCategories.slice(startIndex, endIndex);
@@ -238,6 +242,8 @@ function displayCategoriesWithPagination() {
 }
 
 function renderCategoriesPaginationControls() {
+    const totalPages = Math.ceil(allCategories.length / CATEGORIES_PER_PAGE);
+
     categoriesPaginationControls.innerHTML = '';
 
     const prevLi = document.createElement('li');
@@ -252,7 +258,7 @@ function renderCategoriesPaginationControls() {
     });
     categoriesPaginationControls.appendChild(prevLi);
 
-    for (let i = 1; i <= totalPagesCategories; i++) {
+    for (let i = 1; i <= totalPages; i++) {
         const pageLi = document.createElement('li');
         pageLi.className = `page-item ${i === currentPageCategories ? 'active' : ''}`;
         pageLi.innerHTML = `<a class="page-link" href="#">${i}</a>`;
@@ -265,11 +271,11 @@ function renderCategoriesPaginationControls() {
     }
 
     const nextLi = document.createElement('li');
-    nextLi.className = `page-item ${currentPageCategories === totalPagesCategories ? 'disabled' : ''}`;
+    nextLi.className = `page-item ${currentPageCategories === totalPages ? 'disabled' : ''}`;
     nextLi.innerHTML = `<a class="page-link" href="#" aria-label="Next"><span aria-hidden="true">»</span></a>`;
     nextLi.addEventListener('click', (e) => {
         e.preventDefault();
-        if (currentPageCategories < totalPagesCategories) {
+        if (currentPageCategories < totalPages) {
             currentPageCategories++;
             displayCategoriesWithPagination();
         }
@@ -282,7 +288,7 @@ function renderCategoryFilters() {
     allCategories.forEach(category => {
         const button = document.createElement('button');
         button.className = 'btn btn-outline-primary category-btn';
-        button.setAttribute('data-category', category.name.toLowerCase()); // Ensure lowercase for consistency
+        button.setAttribute('data-category', category.name.toLowerCase());
         button.textContent = `${category.name.charAt(0).toUpperCase() + category.name.slice(1)} Plans`;
         categoryButtonsContainer.appendChild(button);
     });
@@ -291,9 +297,10 @@ function renderCategoryFilters() {
         button.addEventListener('click', () => {
             document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
-            const category = button.getAttribute('data-category');
-            fetchPlans(category); // Fetch plans with the selected category
-            console.log('Filtering by category:', category); // Debug log
+            currentCategory = button.getAttribute('data-category');
+            currentPagePlans = 1; // Reset to first page on category change
+            displayPlansWithPagination();
+            console.log('Filtering by category:', currentCategory);
         });
     });
 }
@@ -405,8 +412,7 @@ async function savePlan(e) {
         const response = await fetchWithAuth(url, { method, body: JSON.stringify(plan) });
         if (response.ok) {
             planModalInstance.hide();
-            const activeCategory = document.querySelector('.category-btn.active').getAttribute('data-category');
-            fetchPlans(activeCategory);
+            fetchPlans(currentCategory); // Refresh with current category
             fetchCategories();
         }
     } catch (error) {
@@ -423,8 +429,7 @@ async function togglePlanStatus(planId) {
     try {
         const response = await fetchWithAuth(`${API_BASE_URL}/admin/plans/${planId}/toggle`, { method: 'PUT' });
         if (response.ok) {
-            const activeCategory = document.querySelector('.category-btn.active').getAttribute('data-category');
-            fetchPlans(activeCategory);
+            fetchPlans(currentCategory); // Refresh with current category
         } else {
             throw new Error(`Failed to ${action} plan`);
         }
@@ -489,8 +494,7 @@ async function toggleCategoryStatus(categoryId) {
         const response = await fetchWithAuth(`${API_BASE_URL}/admin/categories/${categoryId}/toggle`, { method: 'PUT' });
         if (response.ok) {
             fetchCategories();
-            const activeCategory = document.querySelector('.category-btn.active').getAttribute('data-category');
-            fetchPlans(activeCategory);
+            fetchPlans(currentCategory); // Refresh plans with current category
         } else {
             throw new Error(`Failed to ${action} category - Status: ${response.status}`);
         }
