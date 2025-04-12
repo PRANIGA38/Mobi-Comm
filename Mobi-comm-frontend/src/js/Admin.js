@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Initialize Bootstrap modal for user details
     if (typeof bootstrap !== 'undefined') {
         const userModalInstance = new bootstrap.Modal(document.getElementById('user-modal'));
     } else {
@@ -16,8 +15,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         await fetchWithAuth('http://localhost:8083/api/admin/plans', { method: 'GET' });
         fetchDashboardStats();
-        fetchExpiringSubscribers();
-        fetchFeedback(); // Fetch feedback on page load
+        await fetchAndPaginateExpiringSubscribers();
+        await fetchAndPaginateFeedback();
     } catch (error) {
         showPopup('Access denied: ' + error.message, false);
         setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
@@ -39,14 +38,24 @@ const confirmLogoutButton = document.getElementById('confirmLogout');
 const cancelLogoutButton = document.getElementById('cancelLogout');
 const feedbackList = document.getElementById('feedbackList');
 const noFeedbackMessage = document.getElementById('noFeedbackMessage');
+const prevSubscriberPage = document.getElementById('prevSubscriberPage');
+const nextSubscriberPage = document.getElementById('nextSubscriberPage');
+const subscriberPageInfo = document.getElementById('subscriberPageInfo');
+const prevFeedbackPage = document.getElementById('prevFeedbackPage');
+const nextFeedbackPage = document.getElementById('nextFeedbackPage');
+const feedbackPageInfo = document.getElementById('feedbackPageInfo');
 
-// Bootstrap Modal Instance for user modal
+let allSubscribers = [];
+let allFeedback = [];
+let subscriberCurrentPage = 0;
+let feedbackCurrentPage = 0;
+const pageSize = 5; // Adjust as needed
+
 let userModalInstance;
 if (typeof bootstrap !== 'undefined') {
     userModalInstance = new bootstrap.Modal(userModal);
 }
 
-// Fetch utility with authentication
 async function fetchWithAuth(url, options = {}) {
     if (!jwtToken) {
         console.error('No JWT token found, redirecting to login');
@@ -67,20 +76,19 @@ async function fetchWithAuth(url, options = {}) {
     }
     if (!response.ok) {
         const errorText = await response.text();
+        console.error(`HTTP error! Status: ${response.status} - ${errorText}`);
         throw new Error(`HTTP error! Status: ${response.status} - ${errorText}`);
     }
     return response;
 }
 
-// Fetch and display dashboard stats dynamically
 async function fetchDashboardStats() {
     try {
         const statsResponse = await fetchWithAuth(`${API_BASE_URL}/admin/dashboard-stats`);
-        if (!statsResponse) return;
         const stats = await statsResponse.json();
         document.getElementById('totalSubscribers').textContent = stats.totalSubscribers.toLocaleString();
         document.getElementById('expiringSoon').textContent = stats.expiringSoon;
-        document.getElementById('activePlans').textContent = stats.activatedPlans || stats.activePlans || 'N/A'; 
+        document.getElementById('activePlans').textContent = stats.activatedPlans || stats.activePlans || 'N/A';
         document.getElementById('monthlyRevenue').textContent = `₹${(stats.monthlyRevenue / 1000000).toFixed(1)}M`;
     } catch (error) {
         console.error('Error fetching dashboard stats:', error);
@@ -91,37 +99,31 @@ async function fetchDashboardStats() {
     }
 }
 
-// Fetch and display expiring subscribers
-async function fetchExpiringSubscribers(searchTerm = '') {
+async function fetchAndPaginateExpiringSubscribers() {
     try {
         const response = await fetchWithAuth(`${API_BASE_URL}/admin/subscribers/expiring-soon`);
-        if (!response) return;
-        const subscribers = await response.json();
-        displayExpiringSubscribers(subscribers, searchTerm);
+        allSubscribers = await response.json();
+        paginateSubscribers(0);
     } catch (error) {
         console.error('Error fetching expiring subscribers:', error);
-        if (expiringSubscribersTable) {
-            expiringSubscribersTable.innerHTML = `<tr><td colspan="6" class="text-center py-3">Error loading subscribers</td></tr>`;
-        }
+        expiringSubscribersTable.innerHTML = '<tr><td colspan="6" class="text-center py-3">Error loading subscribers</td></tr>';
     }
 }
 
-function displayExpiringSubscribers(subscribers, searchTerm = '') {
-    if (!expiringSubscribersTable) return;
-    expiringSubscribersTable.innerHTML = '';
-    const filteredSubscribers = subscribers.filter(subscriber =>
-        !searchTerm ||
-        subscriber.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (subscriber.email && subscriber.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        subscriber.mobileNumber.includes(searchTerm)
-    );
+function paginateSubscribers(page) {
+    const start = page * pageSize;
+    const end = start + pageSize;
+    const paginatedSubscribers = allSubscribers.slice(start, end);
 
-    if (filteredSubscribers.length === 0) {
-        expiringSubscribersTable.innerHTML = `<tr><td colspan="6" class="text-center py-3">No subscribers with expiring plans found</td></tr>`;
+    expiringSubscribersTable.innerHTML = '';
+    if (paginatedSubscribers.length === 0) {
+        expiringSubscribersTable.innerHTML = '<tr><td colspan="6" class="text-center py-3">No subscribers with expiring plans found</td></tr>';
+        prevSubscriberPage.classList.add('disabled');
+        nextSubscriberPage.classList.add('disabled');
         return;
     }
 
-    filteredSubscribers.forEach(subscriber => {
+    paginatedSubscribers.forEach(subscriber => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>
@@ -145,35 +147,19 @@ function displayExpiringSubscribers(subscribers, searchTerm = '') {
     document.querySelectorAll('.view-user').forEach(button => {
         button.addEventListener('click', () => openUserModal(parseInt(button.getAttribute('data-id'))));
     });
+
+    subscriberCurrentPage = page;
+    const totalPages = Math.ceil(allSubscribers.length / pageSize);
+    subscriberPageInfo.textContent = `Page ${page + 1} of ${totalPages}`;
+    prevSubscriberPage.classList.toggle('disabled', page === 0);
+    nextSubscriberPage.classList.toggle('disabled', page >= totalPages - 1);
 }
 
-// Fetch and display feedback
-async function fetchFeedback() {
+async function fetchAndPaginateFeedback() {
     try {
         const response = await fetchWithAuth(`${API_BASE_URL}/feedback/all`);
-        const feedbackListData = await response.json();
-
-        if (!feedbackList) return;
-        feedbackList.innerHTML = '';
-
-        if (feedbackListData.length === 0) {
-            noFeedbackMessage.style.display = 'block';
-            return;
-        } else {
-            noFeedbackMessage.style.display = 'none';
-        }
-
-        feedbackListData.forEach(feedback => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${feedback.name}</td>
-                <td>${feedback.email || 'N/A'}</td>
-                <td>${feedback.phone}</td>
-                <td>${feedback.feedbackText}</td>
-                <td>${formatDate(feedback.createdAt || new Date().toISOString())}</td>
-            `;
-            feedbackList.appendChild(row);
-        });
+        allFeedback = await response.json();
+        paginateFeedback(0);
     } catch (error) {
         console.error('Error fetching feedback:', error);
         feedbackList.innerHTML = '<tr><td colspan="5" class="text-center py-3">Error loading feedback</td></tr>';
@@ -181,20 +167,56 @@ async function fetchFeedback() {
     }
 }
 
-// Search functionality
-function handleSearch() {
-    fetchExpiringSubscribers(searchInput.value.trim());
+function paginateFeedback(page) {
+    const start = page * pageSize;
+    const end = start + pageSize;
+    const paginatedFeedback = allFeedback.slice(start, end);
+
+    feedbackList.innerHTML = '';
+    if (paginatedFeedback.length === 0) {
+        noFeedbackMessage.style.display = 'block';
+        prevFeedbackPage.classList.add('disabled');
+        nextFeedbackPage.classList.add('disabled');
+        return;
+    } else {
+        noFeedbackMessage.style.display = 'none';
+    }
+
+    paginatedFeedback.forEach(feedback => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${feedback.name}</td>
+            <td>${feedback.email || 'N/A'}</td>
+            <td>${feedback.phone}</td>
+            <td>${feedback.feedbackText}</td>
+            <td>${formatDate(feedback.createdAt || new Date().toISOString())}</td>
+        `;
+        feedbackList.appendChild(row);
+    });
+
+    feedbackCurrentPage = page;
+    const totalPages = Math.ceil(allFeedback.length / pageSize);
+    feedbackPageInfo.textContent = `Page ${page + 1} of ${totalPages}`;
+    prevFeedbackPage.classList.toggle('disabled', page === 0);
+    nextFeedbackPage.classList.toggle('disabled', page >= totalPages - 1);
 }
 
-// Open user details modal
+function handleSearch() {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    const filteredSubscribers = allSubscribers.filter(subscriber =>
+        subscriber.name.toLowerCase().includes(searchTerm) ||
+        (subscriber.email && subscriber.email.toLowerCase().includes(searchTerm)) ||
+        subscriber.mobileNumber.includes(searchTerm)
+    );
+    allSubscribers = filteredSubscribers;
+    paginateSubscribers(0); // Reset to first page
+}
+
 async function openUserModal(userId) {
     try {
         const subscriberResponse = await fetchWithAuth(`${API_BASE_URL}/admin/subscribers/${userId}`);
-        if (!subscriberResponse) return;
         const user = await subscriberResponse.json();
-
         const historyResponse = await fetchWithAuth(`${API_BASE_URL}/admin/subscribers/${userId}/recharge-history`);
-        if (!historyResponse) return;
         const rechargeHistory = await historyResponse.json();
 
         document.getElementById('modal-user-avatar').src = user.avatar || '/src/assets/icons/users.png';
@@ -204,34 +226,31 @@ async function openUserModal(userId) {
         document.getElementById('modal-user-address').textContent = user.address || 'N/A';
 
         const rechargeHistoryTable = document.getElementById('recharge-history-table');
-        if (rechargeHistoryTable) {
-            rechargeHistoryTable.innerHTML = '';
-            const limitedHistory = rechargeHistory.slice(0, 4);
+        rechargeHistoryTable.innerHTML = '';
+        const limitedHistory = rechargeHistory.slice(0, 4);
 
-            if (limitedHistory.length === 0) {
-                rechargeHistoryTable.innerHTML = `<tr><td colspan="5" class="text-center py-3">No recharge history available</td></tr>`;
-            } else {
-                limitedHistory.forEach(record => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${formatDate(record.rechargeDate)}</td>
-                        <td>${record.planName}</td>
-                        <td>₹${record.amount.toFixed(2)}</td>
-                        <td>${record.paymentMode}</td>
-                        <td>${record.status}</td>
-                    `;
-                    rechargeHistoryTable.appendChild(row);
-                });
-
-                if (rechargeHistory.length > 4) {
-                    const viewAllRow = document.createElement('tr');
-                    viewAllRow.innerHTML = `
-                        <td colspan="5" class="text-center">
-                            <a href="/src/pages/subscribers.html?userId=${userId}" class="btn btn-sm btn-primary">View All (${rechargeHistory.length} entries)</a>
-                        </td>
-                    `;
-                    rechargeHistoryTable.appendChild(viewAllRow);
-                }
+        if (limitedHistory.length === 0) {
+            rechargeHistoryTable.innerHTML = '<tr><td colspan="5" class="text-center py-3">No recharge history available</td></tr>';
+        } else {
+            limitedHistory.forEach(record => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(record.rechargeDate)}</td>
+                    <td>${record.planName}</td>
+                    <td>₹${record.amount.toFixed(2)}</td>
+                    <td>${record.paymentMode}</td>
+                    <td>${record.status}</td>
+                `;
+                rechargeHistoryTable.appendChild(row);
+            });
+            if (rechargeHistory.length > 4) {
+                const viewAllRow = document.createElement('tr');
+                viewAllRow.innerHTML = `
+                    <td colspan="5" class="text-center">
+                        <a href="/src/pages/subscribers.html?userId=${userId}" class="btn btn-sm btn-primary">View All (${rechargeHistory.length} entries)</a>
+                    </td>
+                `;
+                rechargeHistoryTable.appendChild(viewAllRow);
             }
         }
 
@@ -242,7 +261,6 @@ async function openUserModal(userId) {
     }
 }
 
-// Utility functions
 function formatDate(dateString) {
     return dateString ? new Date(dateString).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
 }
@@ -261,16 +279,14 @@ function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Custom popup function
 function showPopup(message, isSuccess) {
-    alert(message); // Replace with your actual popup implementation if different
+    alert(message);
 }
 
-// Event Listeners
 window.addEventListener('DOMContentLoaded', () => {
     fetchDashboardStats();
-    fetchExpiringSubscribers();
-    fetchFeedback(); // Fetch feedback on load
+    fetchAndPaginateExpiringSubscribers();
+    fetchAndPaginateFeedback();
 
     if (searchButton) searchButton.addEventListener('click', handleSearch);
     if (searchInput) searchInput.addEventListener('keyup', (e) => e.key === 'Enter' && handleSearch());
@@ -284,7 +300,6 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Improved logout event listeners
     const logoutLinks = document.querySelectorAll('.menu-item a[href="/src/pages/account.html"]');
     if (logoutLinks.length > 0 && logoutModal) {
         logoutLinks.forEach(link => {
@@ -322,6 +337,30 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         };
     }
+
+    prevSubscriberPage.addEventListener('click', () => {
+        if (!prevSubscriberPage.classList.contains('disabled')) {
+            paginateSubscribers(subscriberCurrentPage - 1);
+        }
+    });
+
+    nextSubscriberPage.addEventListener('click', () => {
+        if (!nextSubscriberPage.classList.contains('disabled')) {
+            paginateSubscribers(subscriberCurrentPage + 1);
+        }
+    });
+
+    prevFeedbackPage.addEventListener('click', () => {
+        if (!prevFeedbackPage.classList.contains('disabled')) {
+            paginateFeedback(feedbackCurrentPage - 1);
+        }
+    });
+
+    nextFeedbackPage.addEventListener('click', () => {
+        if (!nextFeedbackPage.classList.contains('disabled')) {
+            paginateFeedback(feedbackCurrentPage + 1);
+        }
+    });
 
     window.onscroll = () => {
         const scrollTopBtn = document.getElementById('scrollTopBtn');

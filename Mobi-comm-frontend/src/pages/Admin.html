@@ -191,9 +191,18 @@
                                 </table>
                             </div>
                         </div>
+                        <div class="card-footer">
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-center">
+                                    <li class="page-item" id="prevSubscriberPage"><a class="page-link" href="#">Previous</a></li>
+                                    <li class="page-item" id="nextSubscriberPage"><a class="page-link" href="#">Next</a></li>
+                                </ul>
+                                <p id="subscriberPageInfo" class="text-center mt-2"></p>
+                            </nav>
+                        </div>
                     </div>
 
-                    <!-- Feedback Section -->
+                    <!-- Recent Feedback Table -->
                     <div class="card mb-4">
                         <div class="card-header bg-white">
                             <h5>Recent Feedback</h5>
@@ -214,13 +223,22 @@
                                 </table>
                                 <p id="noFeedbackMessage" style="display: none; text-align: center; padding: 10px;">No feedback available.</p>
                             </div>
+                            <div class="card-footer">
+                                <nav aria-label="Page navigation">
+                                    <ul class="pagination justify-content-center">
+                                        <li class="page-item" id="prevFeedbackPage"><a class="page-link" href="#">Previous</a></li>
+                                        <li class="page-item" id="nextFeedbackPage"><a class="page-link" href="#">Next</a></li>
+                                    </ul>
+                                    <p id="feedbackPageInfo" class="text-center mt-2"></p>
+                                </nav>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- User Details Modal (unchanged) -->
+        <!-- User Details Modal -->
         <div class="modal fade" id="user-modal" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
