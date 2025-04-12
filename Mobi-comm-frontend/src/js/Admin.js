@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await fetchWithAuth('http://localhost:8083/api/admin/plans', { method: 'GET' });
         fetchDashboardStats();
         fetchExpiringSubscribers();
+        fetchFeedback(); // Fetch feedback on page load
     } catch (error) {
         showPopup('Access denied: ' + error.message, false);
         setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
@@ -36,7 +37,8 @@ const mobileSidebar = document.getElementById('mobileSidebar');
 const logoutModal = document.getElementById('logoutModal');
 const confirmLogoutButton = document.getElementById('confirmLogout');
 const cancelLogoutButton = document.getElementById('cancelLogout');
-const closeModal = document.querySelector('.Logout-Modal-content .close');
+const feedbackList = document.getElementById('feedbackList');
+const noFeedbackMessage = document.getElementById('noFeedbackMessage');
 
 // Bootstrap Modal Instance for user modal
 let userModalInstance;
@@ -145,6 +147,40 @@ function displayExpiringSubscribers(subscribers, searchTerm = '') {
     });
 }
 
+// Fetch and display feedback
+async function fetchFeedback() {
+    try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/feedback/all`);
+        const feedbackListData = await response.json();
+
+        if (!feedbackList) return;
+        feedbackList.innerHTML = '';
+
+        if (feedbackListData.length === 0) {
+            noFeedbackMessage.style.display = 'block';
+            return;
+        } else {
+            noFeedbackMessage.style.display = 'none';
+        }
+
+        feedbackListData.forEach(feedback => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${feedback.name}</td>
+                <td>${feedback.email || 'N/A'}</td>
+                <td>${feedback.phone}</td>
+                <td>${feedback.feedbackText}</td>
+                <td>${formatDate(feedback.createdAt || new Date().toISOString())}</td>
+            `;
+            feedbackList.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error fetching feedback:', error);
+        feedbackList.innerHTML = '<tr><td colspan="5" class="text-center py-3">Error loading feedback</td></tr>';
+        noFeedbackMessage.style.display = 'none';
+    }
+}
+
 // Search functionality
 function handleSearch() {
     fetchExpiringSubscribers(searchInput.value.trim());
@@ -234,6 +270,7 @@ function showPopup(message, isSuccess) {
 window.addEventListener('DOMContentLoaded', () => {
     fetchDashboardStats();
     fetchExpiringSubscribers();
+    fetchFeedback(); // Fetch feedback on load
 
     if (searchButton) searchButton.addEventListener('click', handleSearch);
     if (searchInput) searchInput.addEventListener('keyup', (e) => e.key === 'Enter' && handleSearch());
@@ -259,10 +296,6 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (closeModal && logoutModal) closeModal.onclick = () => {
-        logoutModal.style.display = 'none';
-        console.log('Logout modal closed via close button');
-    };
     if (cancelLogoutButton && logoutModal) cancelLogoutButton.onclick = () => {
         logoutModal.style.display = 'none';
         console.log('Logout modal closed via cancel button');
