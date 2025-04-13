@@ -34,13 +34,15 @@ public class SecurityConfig {
             .cors().and()
             .csrf().disable()
             .authorizeHttpRequests(authorizeRequests ->
-            authorizeRequests
-                .requestMatchers("/api/auth/admin-login", "/api/auth/send-otp", "/api/auth/verify-otp", "/api/public/**", "/api/newprepaid/register", "/api/recharge" ).permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/user/**").hasRole("USER")
-                .anyRequest().authenticated()
-        )
+                authorizeRequests
+                    .requestMatchers("/api/auth/admin-login", "/api/auth/send-otp", "/api/auth/verify-otp", "/api/public/**", "/api/newprepaid/register", "/api/recharge").permitAll()
+                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                    .requestMatchers("/api/users/profile", "/api/user/**").hasRole("USER") // Explicitly include /api/users/profile
+                    .anyRequest().authenticated()
+            )
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+            .exceptionHandling().accessDeniedPage("/account.html") // Redirect to login page on 403
             .and()
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 

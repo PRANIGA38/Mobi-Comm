@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('monthlyDataTotal').textContent = `${monthlyData.total} GB total`;
 
         // Fetch and display transactions
-        const transactionsResponse = await fetchWithAuth('http://localhost:8083/api/users/transactions', { method: 'GET' }, true);
+        const transactionsResponse = await fetchWithAuth('http://localhost:8083/api/transactions/user/top5', { method: 'GET' }, true);
         const transactions = await transactionsResponse.json();
 
         const transactionHistoryTable = document.getElementById('transactionHistoryTable');
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const tr = document.createElement('tr');
                 tr.className = index < 4 ? '' : 'hidden-transaction'; // Hide transactions beyond 4 initially
                 tr.innerHTML = `
-                    <td>${transaction.type || 'N/A'}</td>
+                    <td>${transaction.transactionType || 'N/A'}</td> <!-- Changed to transactionType -->
                     <td>${new Date(transaction.date).toLocaleDateString() || 'N/A'}</td>
                     <td>${transaction.amount ? `₹${Math.abs(transaction.amount)}` : 'N/A'}</td>
                 `;

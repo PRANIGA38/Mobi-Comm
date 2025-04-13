@@ -1,6 +1,6 @@
 package com.springboot.mobicomm.service;
 
-import com.razorpay.Order;
+import com.razorpay.Order; 
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import com.springboot.mobicomm.entity.*;
@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -106,7 +107,7 @@ public class TransactionService {
             logger.info("Processing Razorpay payment for amount: {}", transaction.getAmount());
 
             JSONObject orderRequest = new JSONObject();
-            orderRequest.put("amount", (long) (transaction.getAmount() * 100)); // Amount in paise
+            orderRequest.put("amount", (long) (transaction.getAmount() * 100)); 
             orderRequest.put("currency", rzpCurrency);
             orderRequest.put("receipt", "receipt_" + System.currentTimeMillis());
             orderRequest.put("notes", new JSONObject().put("payment_method", transaction.getPaymentMethod()));
@@ -115,8 +116,6 @@ public class TransactionService {
             logger.info("Razorpay order response: {}", order.toJson());
             String orderId = order.get("id");
             transaction.setOrderId(orderId);
-
-            // Include session token if available (check Razorpay API docs)
             String sessionToken = order.toJson().has("session_token") ? order.toJson().getString("session_token") : null;
             response.put("status", "succeeded");
             response.put("orderId", orderId);
@@ -166,5 +165,13 @@ public class TransactionService {
         logger.info("Updated user with currentPlan: {} and planExpiryDate: {}", user.getCurrentPlan(), user.getPlanExpiryDate());
 
         return response;
+    }
+    public List<Transaction> getTransactionsForUser(Recharge user) {
+        logger.info("Fetching transactions for user with mobile number: {}", user.getMobileNumber());
+        return transactionRepository.findByUserOrderByDateDesc(user);
+    }
+    public List<Transaction> getTop5TransactionsForUser(Recharge user) {
+        logger.info("Fetching top 5 transactions for user with mobile number: {}", user.getMobileNumber());
+        return transactionRepository.findTop5ByUserOrderByDateDesc(user);
     }
 }

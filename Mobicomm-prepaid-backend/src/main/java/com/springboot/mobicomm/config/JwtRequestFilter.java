@@ -12,8 +12,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.springboot.mobicomm.entity.Recharge;
+import com.springboot.mobicomm.repository.RechargeRepository;
 
 import java.util.Collections;
+import java.util.Optional;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -23,14 +26,17 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private RechargeRepository rechargeRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws jakarta.servlet.ServletException, java.io.IOException {
         String requestURI = request.getRequestURI();
         log.info("Processing request for URI: {}", requestURI);
 
-        if (requestURI.equals("/api/auth/admin-login") || 
-            requestURI.equals("/api/auth/send-otp") || 
+        if (requestURI.equals("/api/auth/admin-login") ||
+            requestURI.equals("/api/auth/send-otp") ||
             requestURI.equals("/api/auth/verify-otp")) {
             log.info("Skipping JWT validation for URI: {}", requestURI);
             chain.doFilter(request, response);
@@ -59,6 +65,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if (jwtUtil.validateToken(jwt, username)) {
+                Optional<Recharge> rechargeOpt = rechargeRepository.findByMobileNumber(username);
+                if (rechargeOpt.isPresent()) {
+                    request.setAttribute("user", rechargeOpt.get());
+                    log.info("Set Recharge object for user: {}", username);
+                } else {
+                    log.warn("No Recharge found for user: {}", username);
+                }
+
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         username, null, Collections.singletonList(new SimpleGrantedAuthority(role)));
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

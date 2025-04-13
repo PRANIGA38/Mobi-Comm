@@ -38,16 +38,15 @@ public class Transaction {
     @JoinColumn(name = "user_id")
     private Recharge user;
 
-    // Add clientSecret field to return to the frontend
     @Column
     private String clientSecret;
 
     @Column(name = "order_id")
-    private String orderId; // Store Razorpay order ID
+    private String orderId;
 
     public void setTransactionType(String transactionType) {
         this.transactionType = transactionType;
-        this.paymentMethod = transactionType;
+        this.paymentMethod = transactionType; 
     }
 
     public void ensurePaymentMethod() {

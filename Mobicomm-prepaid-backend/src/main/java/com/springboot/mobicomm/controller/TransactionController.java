@@ -6,9 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.springboot.mobicomm.entity.Recharge;
 import com.springboot.mobicomm.entity.Transaction;
 import com.springboot.mobicomm.service.TransactionService;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -34,6 +36,30 @@ public class TransactionController {
         } catch (Exception e) {
             logger.error("Internal server error while saving transaction: {}", e.getMessage(), e);
             return ResponseEntity.status(500).body(Map.of("error", "Internal server error: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<List<Transaction>> getTransactionsForUser(@RequestAttribute("user") Recharge user) {
+        try {
+            logger.info("Fetching transactions for user: {}", user.getMobileNumber());
+            List<Transaction> transactions = transactionService.getTransactionsForUser(user);
+            return ResponseEntity.ok(transactions);
+        } catch (Exception e) {
+            logger.error("Error fetching transactions: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
+    @GetMapping("/user/top5")
+    public ResponseEntity<List<Transaction>> getTop5TransactionsForUser(@RequestAttribute("user") Recharge user) {
+        try {
+            logger.info("Fetching top 5 transactions for user: {}", user.getMobileNumber());
+            List<Transaction> transactions = transactionService.getTop5TransactionsForUser(user);
+            return ResponseEntity.ok(transactions);
+        } catch (Exception e) {
+            logger.error("Error fetching top 5 transactions: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(null);
         }
     }
 }
