@@ -1,6 +1,42 @@
 // Base URL for API
 const API_BASE_URL = 'http://localhost:8083/api';
 
+// Fetch utility with authentication
+async function fetchWithAuth(url, options = {}, requiresAuth = true) {
+    const token = localStorage.getItem('jwtToken');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    if (requiresAuth && token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('jwtToken');
+            // Optionally redirect to login page
+            throw new Error('Unauthorized');
+        }
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `HTTP error! Status: ${response.status}`);
+        }
+
+        return response;
+    } catch (error) {
+        console.error(`Fetch error for ${url}:`, error.message);
+        throw error;
+    }
+}
+
 // Fetch plans from the backend
 async function fetchPlans() {
     try {
@@ -24,6 +60,7 @@ async function fetchPlans() {
         return [];
     }
 }
+
 // Show plan details in modal
 async function showPlanDetails(planId) {
     const plans = await fetchPlans();
@@ -112,6 +149,7 @@ async function showPlanDetails(planId) {
 
     document.querySelector('.btn-select-from-modal').setAttribute('data-plan-id', planId);
 }
+
 function displayPlans(filteredPlans) {
     const plansContainer = document.getElementById('plansContainer');
     plansContainer.innerHTML = '';
@@ -220,6 +258,7 @@ async function selectPlan(planId) {
     // If mobile number is valid, proceed to payment page
     window.location.href = `/src/pages/Payment.html?amount=${plan.price}&mobile=${mobileNumber}&planId=${planId}`;
 }
+
 // Fetch categories from the backend
 async function fetchCategories() {
     try {
@@ -306,6 +345,7 @@ async function populateCategories() {
         });
     });
 }
+
 async function applyFilters() {
     const plans = await fetchPlans();
     const priceRange = document.getElementById('priceRange').value;
@@ -441,6 +481,33 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('changeNumberBtn').textContent = 'Change';
     }
 
+    // Load user profile icon
+    const token = localStorage.getItem('jwtToken');
+    const userProfileIcon = document.getElementById('userProfileIcon');
+
+    if (token) {
+        try {
+            const response = await fetchWithAuth('http://localhost:8083/api/users/profile', { method: 'GET' }, true);
+            const user = await response.json();
+
+            // Update profile icon with picture or initial
+            const storedImage = localStorage.getItem('profileImage');
+            if (storedImage || user.profilePicture) {
+                const imageSrc = storedImage || user.profilePicture;
+                userProfileIcon.innerHTML = `<img src="${imageSrc}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
+            } else {
+                const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+                userProfileIcon.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: #5680E9; color: white; font-size: 20px;">${initial}</div>`;
+            }
+        } catch (error) {
+            // If no valid user data, show default bi-person-circle icon
+            userProfileIcon.innerHTML = `<i class="bi bi-person-circle" style="font-size: 40px; color: white;"></i>`;
+        }
+    } else {
+        // If no token, show default bi-person-circle icon
+        userProfileIcon.innerHTML = `<i class="bi bi-person-circle" style="font-size: 40px; color: white;"></i>`;
+    }
+
     // Change number functionality
     const changeBtn = document.getElementById('changeNumberBtn');
     changeBtn.addEventListener('click', function() {
@@ -452,59 +519,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             validateAndUpdateMobile();
         }
     });
-    document.addEventListener("DOMContentLoaded", function () {
-        const currentPage = window.location.pathname; // Get the current page path
-        const navLinks = document.querySelectorAll(".nav-link");
-    
-        navLinks.forEach(link => {
-            // Compare the href of the link with the current page
-            if (link.getAttribute("href") === currentPage) {
-                link.parentElement.classList.add("active"); // Add 'active' to the parent <li>
-            }
-        });
-    });
-// Filter buttons
-document.getElementById('applyFilters').addEventListener('click', applyFilters);
-document.getElementById('resetFilters').addEventListener('click', async function() {
-    document.getElementById('priceRange').value = 'all';
-    document.getElementById('validityFilter').value = 'all';
-    document.getElementById('dataFilter').value = 'all';
-    document.querySelectorAll('.sidebar-item, .category-pill').forEach(el => el.classList.remove('active'));
-    document.querySelector('.sidebar-item[data-category="all"]').classList.add('active');
-    document.querySelector('.category-pill[data-category="all"]').classList.add('active');
-    const plans = await fetchPlans();
-    displayPlans(plans);
-});
-// Modal select plan
-document.querySelector('.btn-select-from-modal').addEventListener('click', function() {
-    const planId = this.getAttribute('data-plan-id');
-    selectPlan(planId);
-    bootstrap.Modal.getInstance(document.getElementById('planDetailsModal')).hide();
-});
-window.onscroll = function() {
-    const scrollBtn = document.getElementById('scrollTopBtn');
-    const navbar = document.querySelector('.navbar');
-    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-        scrollBtn.style.display = 'block';
-        navbar.classList.add('scrolled');
-    } else {
-        scrollBtn.style.display = 'none';
-        navbar.classList.remove('scrolled');
-    }
-};
-    // Category selection
-    document.querySelectorAll('.sidebar-item, .category-pill').forEach(item => {
-        item.addEventListener('click', function() {
-            document.querySelectorAll('.sidebar-item, .category-pill').forEach(el => el.classList.remove('active'));
-            this.classList.add('active');
-            const category = this.getAttribute('data-category');
-            if (this.classList.contains('sidebar-item')) {
-                document.querySelector(`.category-pill[data-category="${category}"]`).classList.add('active');
-            } else {
-                document.querySelector(`.sidebar-item[data-category="${category}"]`).classList.add('active');
-            }
-            applyFilters();
-        });
+
+    // Navigation active state
+    const currentPage = window.location.pathname;
+    const navLinks = document.querySelectorAll(".nav-link");
+    navLinks.forEach(link => {
+        if (link.getAttribute("href") === currentPage) {
+            link.parentElement.classList.add("active");
+        }
     });
 
     // Filter buttons
@@ -539,6 +561,21 @@ window.onscroll = function() {
             navbar.classList.remove('scrolled');
         }
     };
+
+    // Category selection
+    document.querySelectorAll('.sidebar-item, .category-pill').forEach(item => {
+        item.addEventListener('click', function() {
+            document.querySelectorAll('.sidebar-item, .category-pill').forEach(el => el.classList.remove('active'));
+            this.classList.add('active');
+            const category = this.getAttribute('data-category');
+            if (this.classList.contains('sidebar-item')) {
+                document.querySelector(`.category-pill[data-category="${category}"]`).classList.add('active');
+            } else {
+                document.querySelector(`.sidebar-item[data-category="${category}"]`).classList.add('active');
+            }
+            applyFilters();
+        });
+    });
 });
 
 function scrollToTop() {
