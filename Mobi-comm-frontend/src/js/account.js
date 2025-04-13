@@ -38,6 +38,35 @@ async function fetchWithAuth(url, options = {}, requiresAuth = true) {
     }
 }
 
+// Load user profile icon on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('jwtToken');
+    const userProfileIcon = document.getElementById('userProfileIcon');
+
+    if (token) {
+        try {
+            const response = await fetchWithAuth('http://localhost:8083/api/users/profile', { method: 'GET' }, true);
+            const user = await response.json();
+
+            // Update profile icon with picture or initial
+            const storedImage = localStorage.getItem('profileImage');
+            if (storedImage || user.profilePicture) {
+                const imageSrc = storedImage || user.profilePicture;
+                userProfileIcon.innerHTML = `<img src="${imageSrc}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
+            } else {
+                const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+                userProfileIcon.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: #5680E9; color: white; font-size: 20px;">${initial}</div>`;
+            }
+        } catch (error) {
+            // If no valid user data, show default bi-person-circle icon
+            userProfileIcon.innerHTML = `<i class="bi bi-person-circle" style="font-size: 30px; color: white;"></i>`;
+        }
+    } else {
+        // If no token, show default bi-person-circle icon
+        userProfileIcon.innerHTML = `<i class="bi bi-person-circle" style="font-size: 30px; color: white;"></i>`;
+    }
+});
+
 function showForm(type) {
     const mobileLogin = document.getElementById('mobileLogin');
     const adminLogin = document.getElementById('adminLogin');
@@ -85,7 +114,6 @@ async function sendOTP(mobile) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-                // Removed Authorization header since this is a public endpoint
             },
             body: JSON.stringify({ mobileNumber: mobile })
         });
@@ -137,7 +165,6 @@ async function verifyOTP() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-                // Removed Authorization header since this is a public endpoint
             },
             body: JSON.stringify({ mobileNumber: mobile, otp: enteredOTP })
         });
@@ -186,7 +213,6 @@ document.getElementById('otpForm').addEventListener('submit', function (event) {
     sendOTP(mobile);
 });
 
-// Admin login form submission (unchanged as per your request)
 document.getElementById('adminForm').addEventListener('submit', async function (event) {
     event.preventDefault();
     const username = document.getElementById('username').value.trim();
@@ -199,12 +225,11 @@ document.getElementById('adminForm').addEventListener('submit', async function (
     if (!username || !password) return;
 
     const button = this.querySelector('button[type="submit"]');
-    if (button.disabled) return; // Prevent multiple submissions
+    if (button.disabled) return;
     button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
     button.disabled = true;
 
     try {
-        // Clear any existing token before login
         localStorage.removeItem('jwtToken');
 
         const response = await fetch('http://localhost:8083/api/auth/admin-login', {
@@ -229,12 +254,11 @@ document.getElementById('adminForm').addEventListener('submit', async function (
     }
 });
 
-// Update checkUserRole to use fetchWithAuth
 async function checkUserRole(token) {
     try {
         const response = await fetchWithAuth('http://localhost:8083/api/users/profile', {
             method: 'GET'
-        }, true); // Auth required
+        }, true);
 
         if (response.ok) {
             showPopup('Login successful! Redirecting to profile...', true);
@@ -245,12 +269,11 @@ async function checkUserRole(token) {
     }
 }
 
-// Update checkAdminRole to use fetchWithAuth (unchanged as per your request)
 async function checkAdminRole(token) {
     try {
         const response = await fetchWithAuth('http://localhost:8083/api/admin/plans', {
             method: 'GET'
-        }, true); // Auth required
+        }, true);
 
         if (response.ok) {
             showPopup('Login successful! Redirecting to admin...', true);
