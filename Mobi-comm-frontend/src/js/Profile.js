@@ -1,4 +1,4 @@
-// Fetch utility with authentication (unchanged)
+// Fetch utility with authentication
 async function fetchWithAuth(url, options = {}, requiresAuth = true) {
     const token = localStorage.getItem('jwtToken');
     const headers = {
@@ -49,11 +49,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('membershipStatus').textContent = user.membershipStatus || 'Standard';
         document.getElementById('joinDate').textContent = user.joinDate ? new Date(user.joinDate).getFullYear() : 'N/A';
 
-        // Profile picture logic
+        // Profile picture logic for profile section and navbar
         const profilePic = document.getElementById('profilePic');
+        const userProfileIcon = document.getElementById('userProfileIcon');
         const storedImage = localStorage.getItem('profileImage');
-        if (storedImage) {
-            profilePic.innerHTML = `<img src="${storedImage}" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+
+        if (storedImage || user.profilePicture) {
+            const imageSrc = storedImage || user.profilePicture;
+            profilePic.innerHTML = `<img src="${imageSrc}" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+            userProfileIcon.innerHTML = `<img src="${imageSrc}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
         } else {
             const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
             profilePic.innerHTML = `<span style="font-size: 2rem; color: #fff;">${initial}</span>`;
@@ -61,6 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             profilePic.style.alignItems = 'center';
             profilePic.style.justifyContent = 'center';
             profilePic.style.backgroundColor = '#007bff';
+            userProfileIcon.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: #007bff;"><span class="text-white" style="font-size: 20px;">${initial}</span></div>`;
         }
 
         // Pre-fill edit profile modal
@@ -144,16 +149,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             transactions.forEach((transaction, index) => {
                 const tr = document.createElement('tr');
-                tr.className = index < 4 ? '' : 'hidden-transaction'; // Hide transactions beyond 4 initially
+                tr.className = index < 4 ? '' : 'hidden-transaction';
                 tr.innerHTML = `
-                    <td>${transaction.transactionType || 'N/A'}</td> <!-- Changed to transactionType -->
+                    <td>${transaction.transactionType || 'N/A'}</td>
                     <td>${new Date(transaction.date).toLocaleDateString() || 'N/A'}</td>
                     <td>${transaction.amount ? `₹${Math.abs(transaction.amount)}` : 'N/A'}</td>
                 `;
                 transactionHistoryTable.appendChild(tr);
             });
 
-            // Show "View All" button if more than 4 transactions
             const toggleBtnContainer = document.getElementById('transactionToggleBtnContainer');
             const toggleBtn = document.getElementById('toggleTransactionsBtn');
             if (transactions.length > 4) {
@@ -193,7 +197,9 @@ document.getElementById('profileImageInput').addEventListener('change', (event) 
             const imageData = e.target.result;
             localStorage.setItem('profileImage', imageData);
             const profilePic = document.getElementById('profilePic');
+            const userProfileIcon = document.getElementById('userProfileIcon');
             profilePic.innerHTML = `<img src="${imageData}" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+            userProfileIcon.innerHTML = `<img src="${imageData}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
             showToast('Profile picture updated!', 'success');
         };
         reader.readAsDataURL(file);
@@ -208,7 +214,7 @@ confirmLogoutBtn.onclick = function() {
     window.location.href = '/src/pages/account.html';
 };
 
-// Remaining functions (unchanged)
+// Remaining functions
 window.onload = function() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('login') === 'success') {
