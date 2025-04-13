@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 :root {
@@ -7,7 +6,7 @@
     --primary-gradient-start: #4666F6;
     --primary-gradient-end: #8C52FF;
     --nav-gradient: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
-    --footer-gradient: linear-gradient(135deg, var(--primary-gradient-end), var(--primary-gradient-start));
+    --footer-gradient: linear-gradient(135deg, varIAble(--primary-gradient-end), var(--primary-gradient-start));
     --text-color: #ffffff;
     --button-bg: rgba(255, 255, 255, 0.2);
     --card-bg: rgba(255, 255, 255, 0.1);
@@ -101,7 +100,6 @@ footer {
     position: relative;
     overflow: hidden;
     border-radius: 15px;
-
 }
 
 footer::before {
@@ -119,7 +117,6 @@ footer::before {
     0% {
         background-position: 0% 50%;
     }
-
     100% {
         background-position: 100% 50%;
     }
@@ -295,15 +292,12 @@ h1::after {
         margin: 30px 15px;
         padding: 20px;
     }
-
     .navbar-brand img {
         height: 40px;
     }
-
     h1 {
         font-size: 24px;
     }
-
     .faq-question {
         font-size: 16px;
     }
@@ -333,7 +327,6 @@ h1::after {
         opacity: 0;
         transform: translateY(-10px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -367,7 +360,6 @@ h1::after {
     0% {
         transform: translateY(0) rotate(0deg);
     }
-
     100% {
         transform: translateY(-100vh) rotate(360deg);
     }
@@ -394,4 +386,35 @@ h1::after {
 
 #scrollTopBtn:hover {
     background-color: black;
+}
+
+/* Profile Picture in Navbar */
+.profile-picture {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.profile-picture:hover {
+    transform: scale(1.1);
+}
+
+.profile-placeholder {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #8860D0;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+}
+
+.profile-placeholder:hover {
+    transform: scale(1.1);
 }
