@@ -6,7 +6,7 @@
     --primary-gradient-start: #4666F6;
     --primary-gradient-end: #8C52FF;
     --nav-gradient: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
-    --footer-gradient: linear-gradient(135deg, varIAble(--primary-gradient-end), var(--primary-gradient-start));
+    --footer-gradient: linear-gradient(135deg, var(--primary-gradient-end), var(--primary-gradient-start));
     --text-color: #ffffff;
     --button-bg: rgba(255, 255, 255, 0.2);
     --card-bg: rgba(255, 255, 255, 0.1);
@@ -388,33 +388,31 @@ h1::after {
     background-color: black;
 }
 
-/* Profile Picture in Navbar */
-.profile-picture {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+/* Profile Icon Styling */
+#userProfileIcon {
+    padding: 0.25rem;
+}
+
+#userProfileIcon img {
+    width: 40px;
+    height: 40px;
     object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.profile-picture:hover {
-    transform: scale(1.1);
-}
-
-.profile-placeholder {
-    width: 32px;
-    height: 32px;
     border-radius: 50%;
+}
+
+#userProfileIcon .rounded-circle {
+    width: 40px;
+    height: 40px;
     background-color: #8860D0;
-    color: #fff;
+    color: white;
+    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
-    font-weight: 600;
-    transition: transform 0.3s ease;
+    border-radius: 50%;
 }
 
-.profile-placeholder:hover {
-    transform: scale(1.1);
+#userProfileIcon i {
+    font-size: 40px;
+    color: white;
 }

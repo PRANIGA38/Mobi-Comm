@@ -1,3 +1,38 @@
+// Fetch utility with authentication
+async function fetchWithAuth(url, options = {}, requiresAuth = true) {
+    const token = localStorage.getItem('jwtToken');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    if (requiresAuth && token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('jwtToken');
+            throw new Error('Unauthorized');
+        }
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `HTTP error! Status: ${response.status}`);
+        }
+
+        return response;
+    } catch (error) {
+        console.error(`Fetch error for ${url}:`, error.message);
+        throw error;
+    }
+}
+
 // FAQ Interaction
 document.querySelectorAll('.faq-question').forEach(item => {
     item.addEventListener('click', () => {
@@ -20,7 +55,7 @@ document.querySelectorAll('.faq-question').forEach(item => {
     });
 });
 
-// Smooth Scrolling
+// Smooth Scrolling and Profile Update
 document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener("click", function (e) {
@@ -39,8 +74,32 @@ document.addEventListener("DOMContentLoaded", function () {
     // Create floating particles
     createParticles();
 
-    // Update profile picture in navbar
-    updateProfilePicture();
+    // Update profile icon
+    const token = localStorage.getItem('jwtToken');
+    const userProfileIcon = document.getElementById('userProfileIcon');
+
+    if (token) {
+        fetchWithAuth('http://localhost:8083/api/users/profile', { method: 'GET' }, true)
+            .then(response => response.json())
+            .then(user => {
+                // Update profile icon with picture or initial
+                const storedImage = localStorage.getItem('profileImage');
+                if (storedImage || user.profilePicture) {
+                    const imageSrc = storedImage || user.profilePicture;
+                    userProfileIcon.innerHTML = `<img src="${imageSrc}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
+                } else {
+                    const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+                    userProfileIcon.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: #8860D0; color: white; font-size: 20px;">${initial}</div>`;
+                }
+            })
+            .catch(error => {
+                // If no valid user data, show default bi-person-circle icon
+                userProfileIcon.innerHTML = `<i class="bi bi-person-circle" style="font-size: 40px; color: white;"></i>`;
+            });
+    } else {
+        // If no token, show default bi-person-circle icon
+        userProfileIcon.innerHTML = `<i class="bi bi-person-circle" style="font-size: 40px; color: white;"></i>`;
+    }
 });
 
 // Particle Background
@@ -85,40 +144,4 @@ window.onscroll = function () {
 // Scroll to top function
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-// Update profile picture in navbar
-function updateProfilePicture() {
-    const profileLink = document.getElementById('profileLink');
-    const defaultProfileIcon = document.getElementById('defaultProfileIcon');
-    const userProfile = JSON.parse(localStorage.getItem('userProfile'));
-
-    if (userProfile && userProfile.name) {
-        // Hide default icon
-        defaultProfileIcon.style.display = 'none';
-
-        // Remove any existing profile picture or placeholder to avoid duplicates
-        const existingProfileImg = profileLink.querySelector('.profile-picture');
-        const existingPlaceholder = profileLink.querySelector('.profile-placeholder');
-        if (existingProfileImg) existingProfileImg.remove();
-        if (existingPlaceholder) existingPlaceholder.remove();
-
-        if (userProfile.profilePicture) {
-            // Display profile picture
-            const profileImg = document.createElement('img');
-            profileImg.src = userProfile.profilePicture;
-            profileImg.alt = 'Profile Picture';
-            profileImg.classList.add('profile-picture');
-            profileLink.prepend(profileImg);
-        } else {
-            // Display placeholder with user's initial
-            const placeholder = document.createElement('div');
-            placeholder.classList.add('profile-placeholder');
-            placeholder.textContent = userProfile.name.charAt(0).toUpperCase();
-            profileLink.prepend(placeholder);
-        }
-    } else {
-        // Show default icon if no user is logged in
-        defaultProfileIcon.style.display = 'inline-block';
-    }
 }

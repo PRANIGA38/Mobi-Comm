@@ -1,22 +1,22 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 :root {
---primary-color: #8C52FF;
---secondary-color: #4666F6;
---primary-gradient-start: #4666F6;
---primary-gradient-end: #8C52FF;
---nav-gradient: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
---footer-gradient: linear-gradient(135deg, var(--primary-gradient-end), var(--primary-gradient-start));
---text-color: #ffffff;
---button-bg: rgba(255, 255, 255, 0.2);
---card-bg: rgba(255, 255, 255, 0.1);
---purple: #8C52FF;
---primary-blue: #4666F6;
---white: #ffffff;
---light-blue: #6C8EFF;
---gray-blue: #A0AEC0;
+    --primary-color: #8C52FF;
+    --secondary-color: #4666F6;
+    --primary-gradient-start: #4666F6;
+    --primary-gradient-end: #8C52FF;
+    --nav-gradient: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
+    --footer-gradient: linear-gradient(135deg, var(--primary-gradient-end), var(--primary-gradient-start));
+    --text-color: #ffffff;
+    --button-bg: rgba(255, 255, 255, 0.2);
+    --card-bg: rgba(255, 255, 255, 0.1);
+    --purple: #8C52FF;
+    --primary-blue: #4666F6;
+    --white: #ffffff;
+    --light-blue: #6C8EFF;
+    --gray-blue: #A0AEC0;
 }
+
 body {
     background: linear-gradient(135deg, rgba(108, 99, 255, 0.1) 0%, rgba(139, 127, 255, 0.1) 100%);
     background-size: 400% 400%;
@@ -25,24 +25,22 @@ body {
     overflow-x: hidden;
     padding-top: 70px;
 }
+
 @keyframes gradientBackground {
     0% {
         background-position: 0% 50%;
     }
-
     50% {
         background-position: 100% 50%;
     }
-
     100% {
         background-position: 0% 50%;
     }
 }
 
-
 /* Enhanced Navbar */
 .navbar {
-    background: var(--footer-gradient);
+    background: var(--nav-gradient);
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
     padding: 15px 0;
@@ -103,7 +101,7 @@ body {
 }
 
 .dropdown-menu {
-    background-color:#b996fe;
+    background-color: #b996fe;
     border: none;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
@@ -117,7 +115,6 @@ body {
     background-color: rgba(255, 255, 255, 0.2);
     color: var(--white);
 }
-
 
 .page-title {
     color: var(--primary-color);
@@ -177,7 +174,7 @@ body {
     display: block;
     padding: 12px 15px;
     background: linear-gradient(to right, var(--secondary-color), var(--primary-color));
-    color: var(--white)!important;
+    color: var(--white) !important;
     border-radius: 8px;
     text-align: center;
     margin-top: 15px;
@@ -218,7 +215,7 @@ body {
 }
 
 .btn-secondary:hover {
-    background-color:var(--secondary-color);
+    background-color: var(--secondary-color);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
@@ -345,10 +342,38 @@ footer {
         flex: 0 0 100%;
         max-width: 100%;
     }
-    
     .contact-item {
         margin: 10px;
         flex-basis: 100%;
         justify-content: center;
     }
+}
+
+/* Profile Icon Styling */
+#userProfileIcon {
+    padding: 0.25rem;
+}
+
+#userProfileIcon img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+#userProfileIcon .rounded-circle {
+    width: 40px;
+    height: 40px;
+    background-color: #8860D0;
+    color: white;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+#userProfileIcon i {
+    font-size: 40px;
+    color: white;
 }

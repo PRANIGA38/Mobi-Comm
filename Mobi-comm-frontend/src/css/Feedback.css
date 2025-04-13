@@ -1,4 +1,3 @@
-
 :root {
     --primary: #4A90E2;
     --secondary: #6C63FF;
@@ -160,7 +159,7 @@ h1 {
 
 footer {
     background: var(--footer-gradient);
-    color: var(--text-color);
+    color: white;
     padding: 20px 0;
     margin-top: 30px;
     border-radius: 15px;
@@ -192,7 +191,7 @@ footer {
 }
 
 .footer-section a {
-    color: var(--white);
+    color: white;
     text-decoration: none;
     transition: opacity 0.3s ease;
 }
@@ -275,10 +274,9 @@ footer {
         flex-direction: column;
         text-align: center;
     }
-}
-
-.footer-section {
-    margin: 10px 0;
+    .footer-section {
+        margin: 10px 0;
+    }
 }
 
 /* Floating Particles Background */
@@ -330,9 +328,38 @@ footer {
 #scrollTopBtn:hover {
     background-color: black;
 }
+
 .error-message {
-color: red;
-font-size: 0.8em;
-margin-top: 2px;
+    color: red;
+    font-size: 0.8em;
+    margin-top: 2px;
 }
 
+/* Profile Icon Styling */
+#userProfileIcon {
+    padding: 0.25rem;
+}
+
+#userProfileIcon img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+#userProfileIcon .rounded-circle {
+    width: 40px;
+    height: 40px;
+    background-color: #8860D0;
+    color: white;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+#userProfileIcon i {
+    font-size: 40px;
+    color: white;
+}

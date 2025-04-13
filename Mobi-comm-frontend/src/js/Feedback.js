@@ -1,3 +1,38 @@
+// Fetch utility with authentication
+async function fetchWithAuth(url, options = {}, requiresAuth = true) {
+    const token = localStorage.getItem('jwtToken');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    if (requiresAuth && token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('jwtToken');
+            throw new Error('Unauthorized');
+        }
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `HTTP error! Status: ${response.status}`);
+        }
+
+        return response;
+    } catch (error) {
+        console.error(`Fetch error for ${url}:`, error.message);
+        throw error;
+    }
+}
+
 // Form submission handler
 document.getElementById('feedbackForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -61,20 +96,11 @@ document.getElementById('feedbackForm').addEventListener('submit', function(e) {
             feedbackText: feedbackInput.value.trim()
         };
 
-        fetch('http://localhost:8083/api/feedback/submit', {
+        fetchWithAuth('http://localhost:8083/api/feedback/submit', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${jwtToken}`
-            },
             body: JSON.stringify(feedbackData)
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.text();
-        })
+        .then(response => response.text())
         .then(data => {
             const popup = document.getElementById('thankYouPopup');
             popup.style.display = 'block';
@@ -113,7 +139,7 @@ function scrollToTop() {
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// Smooth Scrolling
+// Smooth Scrolling and Profile Update
 document.addEventListener("DOMContentLoaded", function() {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener("click", function(e) {
@@ -131,6 +157,33 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Create floating particles
     createParticles();
+
+    // Update profile icon
+    const token = localStorage.getItem('jwtToken');
+    const userProfileIcon = document.getElementById('userProfileIcon');
+
+    if (token) {
+        fetchWithAuth('http://localhost:8083/api/users/profile', { method: 'GET' }, true)
+            .then(response => response.json())
+            .then(user => {
+                // Update profile icon with picture or initial
+                const storedImage = localStorage.getItem('profileImage');
+                if (storedImage || user.profilePicture) {
+                    const imageSrc = storedImage || user.profilePicture;
+                    userProfileIcon.innerHTML = `<img src="${imageSrc}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
+                } else {
+                    const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+                    userProfileIcon.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: #8860D0; color: white; font-size: 20px;">${initial}</div>`;
+                }
+            })
+            .catch(error => {
+                // If no valid user data, show default bi-person-circle icon
+                userProfileIcon.innerHTML = `<i class="bi bi-person-circle" style="font-size: 40px; color: white;"></i>`;
+            });
+    } else {
+        // If no token, show default bi-person-circle icon
+        userProfileIcon.innerHTML = `<i class="bi bi-person-circle" style="font-size: 40px; color: white;"></i>`;
+    }
 });
 
 // Particle Background
