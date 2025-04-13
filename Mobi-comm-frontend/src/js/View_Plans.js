@@ -505,7 +505,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     } else {
         // If no token, show default bi-person-circle icon
-        userProfileIcon.innerHTML = `<i class="bi bi-person-circle" style="font-size: 40px; color: white;"></i>`;
+        userProfileIcon.innerHTML = `<i class="bi bi-person-circle" style="font-size: 30px; color: white;"></i>`;
     }
 
     // Change number functionality
