@@ -52,12 +52,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Profile picture logic for profile section and navbar
         const profilePic = document.getElementById('profilePic');
         const userProfileIcon = document.getElementById('userProfileIcon');
-        const storedImage = localStorage.getItem('profileImage');
+        const storedImage = localStorage.getItem('profileImage') || user.profilePicture;
 
-        if (storedImage || user.profilePicture) {
-            const imageSrc = storedImage || user.profilePicture;
-            profilePic.innerHTML = `<img src="${imageSrc}" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-            userProfileIcon.innerHTML = `<img src="${imageSrc}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
+        if (storedImage) {
+            profilePic.innerHTML = `<img src="${storedImage}" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+            userProfileIcon.innerHTML = `<img src="${storedImage}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
         } else {
             const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
             profilePic.innerHTML = `<span style="font-size: 2rem; color: #fff;">${initial}</span>`;
@@ -184,7 +183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Profile picture upload
+// Profile picture upload and sync
 document.getElementById('editProfilePic').addEventListener('click', () => {
     document.getElementById('profileImageInput').click();
 });
@@ -193,14 +192,34 @@ document.getElementById('profileImageInput').addEventListener('change', (event) 
     const file = event.target.files[0];
     if (file) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             const imageData = e.target.result;
-            localStorage.setItem('profileImage', imageData);
-            const profilePic = document.getElementById('profilePic');
-            const userProfileIcon = document.getElementById('userProfileIcon');
-            profilePic.innerHTML = `<img src="${imageData}" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-            userProfileIcon.innerHTML = `<img src="${imageData}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
-            showToast('Profile picture updated!', 'success');
+            try {
+                // Save to localStorage
+                localStorage.setItem('profileImage', imageData);
+
+                // Send to backend
+                const response = await fetchWithAuth('http://localhost:8083/api/users/profile', {
+                    method: 'PUT',
+                    body: JSON.stringify({ profilePicture: imageData })
+                }, true);
+                const updatedUser = await response.json();
+
+                // Update UI
+                const profilePic = document.getElementById('profilePic');
+                const userProfileIcon = document.getElementById('userProfileIcon');
+                profilePic.innerHTML = `<img src="${imageData}" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                userProfileIcon.innerHTML = `<img src="${imageData}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
+
+                // Dispatch event for real-time update across pages
+                const event = new Event('profileUpdated');
+                window.dispatchEvent(event);
+
+                showToast('Profile picture updated!', 'success');
+            } catch (error) {
+                showToast('Failed to update profile picture: ' + error.message, 'danger');
+                console.error('Error updating profile picture:', error);
+            }
         };
         reader.readAsDataURL(file);
     }
@@ -272,9 +291,9 @@ window.onclick = (event) => { if (event.target == logoutModal) logoutModal.style
 
 window.onscroll = () => {
     if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-        document.getElementById("scrollTopBtn").style.display = "block";
+        document.getElementById('scrollTopBtn').style.display = 'block';
     } else {
-        document.getElementById("scrollTopBtn").style.display = "none";
+        document.getElementById('scrollTopBtn').style.display = 'none';
     }
 };
 
@@ -318,15 +337,46 @@ document.getElementById('notificationBtn').addEventListener('click', (e) => {
 });
 
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener("click", (e) => {
+    anchor.addEventListener('click', (e) => {
         e.preventDefault();
-        const targetId = anchor.getAttribute("href").substring(1);
+        const targetId = anchor.getAttribute('href').substring(1);
         const targetElement = document.getElementById(targetId);
         if (targetElement) {
             window.scrollTo({
                 top: targetElement.offsetTop - 100,
-                behavior: "smooth"
+                behavior: 'smooth'
             });
         }
     });
+});
+
+// Listen for profile updates from other pages
+window.addEventListener('profileUpdated', () => {
+    const token = localStorage.getItem('jwtToken');
+    if (token) {
+        fetchWithAuth('http://localhost:8083/api/users/profile', { method: 'GET' }, true)
+            .then(response => response.json())
+            .then(user => {
+                const profilePic = document.getElementById('profilePic');
+                const userProfileIcon = document.getElementById('userProfileIcon');
+                const storedImage = localStorage.getItem('profileImage') || user.profilePicture;
+
+                if (storedImage) {
+                    profilePic.innerHTML = `<img src="${storedImage}" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                    userProfileIcon.innerHTML = `<img src="${storedImage}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
+                } else {
+                    const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+                    profilePic.innerHTML = `<span style="font-size: 2rem; color: #fff;">${initial}</span>`;
+                    profilePic.style.display = 'flex';
+                    profilePic.style.alignItems = 'center';
+                    profilePic.style.justifyContent = 'center';
+                    profilePic.style.backgroundColor = '#007bff';
+                    userProfileIcon.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: #007bff;"><span class="text-white" style="font-size: 20px;">${initial}</span></div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing profile:', error);
+                showToast('Failed to refresh profile: ' + error.message, 'danger');
+            });
+    }
 });

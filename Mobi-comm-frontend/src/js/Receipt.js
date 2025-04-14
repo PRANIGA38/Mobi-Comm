@@ -1,3 +1,59 @@
+// Fetch utility with authentication
+async function fetchWithAuth(url, options = {}, requiresAuth = true) {
+    const token = localStorage.getItem('jwtToken');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    if (requiresAuth && token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(url, { ...options, headers });
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem('jwtToken');
+            throw new Error('Unauthorized');
+        }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `HTTP error! Status: ${response.status}`);
+        }
+        return response;
+    } catch (error) {
+        console.error(`Fetch error for ${url}:`, error.message);
+        throw error;
+    }
+}
+
+// Update profile icon
+function updateProfileIcon() {
+    const token = localStorage.getItem('jwtToken');
+    const userProfileIcon = document.getElementById('userProfileIcon');
+    if (token) {
+        fetchWithAuth('http://localhost:8083/api/users/profile', { method: 'GET' }, true)
+            .then(response => response.json())
+            .then(user => {
+                const storedImage = localStorage.getItem('profileImage') || user.profilePicture;
+                if (storedImage) {
+                    userProfileIcon.innerHTML = `<img src="${storedImage}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
+                } else {
+                    const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+                    userProfileIcon.innerHTML = `<div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: #8860D0; color: white; font-size: 20px;">${initial}</div>`;
+                }
+            })
+            .catch(error => {
+                userProfileIcon.innerHTML = `<i class="bi bi-person-circle" style="font-size: 40px; color: white;"></i>`;
+            });
+    } else {
+        userProfileIcon.innerHTML = `<i class="bi bi-person-circle" style="font-size: 40px; color: white;"></i>`;
+    }
+}
+
+// Listen for profile updates from other pages
+window.addEventListener('profileUpdated', updateProfileIcon);
+
 // Show button when scrolling down
 window.onscroll = function () {
     let scrollBtn = document.getElementById("scrollTopBtn");
@@ -33,6 +89,9 @@ function shareReceipt() {
 }
 
 window.onload = function() {
+    // Initialize profile icon on load
+    updateProfileIcon();
+
     // Utility functions
     const generateTransactionId = () => {
         return 'MBTXN' + Math.random().toString(36).substr(2, 9).toUpperCase();

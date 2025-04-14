@@ -456,3 +456,31 @@ footer {
 #scrollTopBtn:hover {
     background-color: black;
 }
+/* Profile Icon Styling (Added to match Payment.css and profile.js) */
+#userProfileIcon {
+    padding: 0.25rem;
+}
+
+#userProfileIcon img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+#userProfileIcon .rounded-circle {
+    width: 40px;
+    height: 40px;
+    background-color: #8860D0;
+    color: white;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+#userProfileIcon i {
+    font-size: 40px;
+    color: white;
+}
