@@ -12,11 +12,12 @@ async function fetchWithAuth(url, options = {}, requiresAuth = true) {
 
     try {
         const response = await fetch(url, { ...options, headers });
-        if (response.status === 401 || response.status === 403) {
+        console.log('Response status:', response.status); // Debug response status
+        if (response.status === 401 || response.status === 403 || response.status === 405) {
             localStorage.removeItem('jwtToken');
-            showToast('Session expired. Please log in again.', 'danger');
+            showToast('Session expired or method not supported. Please log in again.', 'danger');
             setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
-            throw new Error('Unauthorized');
+            throw new Error('Unauthorized or Method Not Supported');
         }
         if (!response.ok) {
             const errorText = await response.text();
@@ -195,12 +196,13 @@ document.getElementById('profileImageInput').addEventListener('change', (event) 
         reader.onload = async (e) => {
             const imageData = e.target.result;
             try {
+                console.log('Token during update:', localStorage.getItem('jwtToken')); // Debug token
                 // Save to localStorage
                 localStorage.setItem('profileImage', imageData);
 
-                // Send to backend
+                // Send to backend with PATCH instead of PUT
                 const response = await fetchWithAuth('http://localhost:8083/api/users/profile', {
-                    method: 'PUT',
+                    method: 'PATCH', // Changed from PUT
                     body: JSON.stringify({ profilePicture: imageData })
                 }, true);
                 const updatedUser = await response.json();
@@ -211,7 +213,7 @@ document.getElementById('profileImageInput').addEventListener('change', (event) 
                 profilePic.innerHTML = `<img src="${imageData}" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
                 userProfileIcon.innerHTML = `<img src="${imageData}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">`;
 
-                // Dispatch event for real-time update across pages
+                // Dispatch event for real-time update
                 const event = new Event('profileUpdated');
                 window.dispatchEvent(event);
 
@@ -219,6 +221,7 @@ document.getElementById('profileImageInput').addEventListener('change', (event) 
             } catch (error) {
                 showToast('Failed to update profile picture: ' + error.message, 'danger');
                 console.error('Error updating profile picture:', error);
+                setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
             }
         };
         reader.readAsDataURL(file);
