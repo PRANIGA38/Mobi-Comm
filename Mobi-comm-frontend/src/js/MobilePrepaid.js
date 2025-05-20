@@ -46,7 +46,7 @@ document.getElementById('recharge-btn').addEventListener('click', async function
             mobileError.style.color = '#28a745';
             mobileError.style.display = 'block';
             setTimeout(() => {
-                window.location.href = `/src/pages/View_Plans.html?mobile=${mobileNumber}`;
+                window.location.href = `../../src/pages/View_Plans.html?mobile=${mobileNumber}`;
             }, 1000);
         } else {
             const errorText = await response.text();

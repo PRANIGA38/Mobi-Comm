@@ -52,9 +52,9 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        log.info("Configuring CORS for origin: http://127.0.0.1:5502");
+        log.info("Configuring CORS for origin: http://127.0.0.1:5500");
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://127.0.0.1:5502"));
+        configuration.setAllowedOrigins(Arrays.asList("http://127.0.0.1:5500"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

@@ -256,7 +256,7 @@ async function selectPlan(planId) {
     }
 
     // If mobile number is valid, proceed to payment page
-    window.location.href = `/src/pages/Payment.html?amount=${plan.price}&mobile=${mobileNumber}&planId=${planId}`;
+    window.location.href = `../../src/pages/Payment.html?amount=${plan.price}&mobile=${mobileNumber}&planId=${planId}`;
 }
 
 // Fetch categories from the backend
