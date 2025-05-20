@@ -85,7 +85,7 @@ document.getElementById('feedbackForm').addEventListener('submit', function(e) {
         const jwtToken = localStorage.getItem('jwtToken');
         if (!jwtToken) {
             alert('Please log in to submit feedback.');
-            window.location.href = '/src/pages/account.html';
+            window.location.href = '../../src/pages/account.html';
             return;
         }
 

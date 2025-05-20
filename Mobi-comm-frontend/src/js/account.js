@@ -22,7 +22,7 @@ async function fetchWithAuth(url, options = {}, requiresAuth = true) {
         if (response.status === 401 || response.status === 403) {
             localStorage.removeItem('jwtToken');
             showPopup('Session expired. Please log in again.', false);
-            setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+            setTimeout(() => window.location.href = '../../src/pages/account.html', 2000);
             throw new Error('Unauthorized');
         }
 
@@ -262,7 +262,7 @@ async function checkUserRole(token) {
 
         if (response.ok) {
             showPopup('Login successful! Redirecting to profile...', true);
-            setTimeout(() => window.location.href = '/src/pages/profile.html', 1000);
+            setTimeout(() => window.location.href = '../../src/pages/profile.html', 1000);
         }
     } catch (error) {
         showPopup('Access denied: ' + error.message, false);
@@ -277,7 +277,7 @@ async function checkAdminRole(token) {
 
         if (response.ok) {
             showPopup('Login successful! Redirecting to admin...', true);
-            setTimeout(() => window.location.href = '/src/pages/admin.html', 1000);
+            setTimeout(() => window.location.href = '../../src/pages/admin.html', 1000);
         }
     } catch (error) {
         showPopup('Access denied: ' + error.message, false);

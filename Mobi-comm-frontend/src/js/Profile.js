@@ -16,7 +16,7 @@ async function fetchWithAuth(url, options = {}, requiresAuth = true) {
         if (response.status === 401 || response.status === 403 || response.status === 405) {
             localStorage.removeItem('jwtToken');
             showToast('Session expired or method not supported. Please log in again.', 'danger');
-            setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+            setTimeout(() => window.location.href = '../../src/pages/account.html', 2000);
             throw new Error('Unauthorized or Method Not Supported');
         }
         if (!response.ok) {
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('jwtToken');
     if (!token) {
         showToast('Please log in to access this page.', 'danger');
-        setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+        setTimeout(() => window.location.href = '../../src/pages/account.html', 2000);
         return;
     }
 
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (error) {
         showToast('Access denied: ' + error.message, 'danger');
-        setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+        setTimeout(() => window.location.href = '../../src/pages/account.html', 2000);
     }
 });
 
@@ -221,7 +221,7 @@ document.getElementById('profileImageInput').addEventListener('change', (event) 
             } catch (error) {
                 showToast('Failed to update profile picture: ' + error.message, 'danger');
                 console.error('Error updating profile picture:', error);
-                setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+                setTimeout(() => window.location.href = '../../src/pages/account.html', 2000);
             }
         };
         reader.readAsDataURL(file);
@@ -233,7 +233,7 @@ const confirmLogoutBtn = document.getElementById('confirmLogout');
 confirmLogoutBtn.onclick = function() {
     localStorage.removeItem('jwtToken');
     localStorage.removeItem('profileImage');
-    window.location.href = '/src/pages/account.html';
+    window.location.href = '../../src/pages/account.html';
 };
 
 // Remaining functions
@@ -331,7 +331,7 @@ function showToast(message, type = 'info') {
     toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
 }
 
-document.getElementById('rechargeBtn').addEventListener('click', () => window.location.href = '/src/pages/MobilePrepaid.html');
+document.getElementById('rechargeBtn').addEventListener('click', () => window.location.href = '../../src/pages/MobilePrepaid.html');
 document.getElementById('startChatBtn').addEventListener('click', () => showToast('Chat support coming soon!', 'info'));
 document.getElementById('notificationBtn').addEventListener('click', (e) => {
     e.preventDefault();

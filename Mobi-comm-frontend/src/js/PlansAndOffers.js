@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('jwtToken');
     if (!token) {
         alert('Please log in to access this page.');
-        setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+        setTimeout(() => window.location.href = '../../src/pages/account.html', 2000);
         return;
     }
     try {
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         fetchCategories();
     } catch (error) {
         alert('Access denied: ' + error.message);
-        setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+        setTimeout(() => window.location.href = '../../src/pages/account.html', 2000);
     }
 });
 
@@ -57,7 +57,7 @@ let allCategories = [];
 
 async function fetchWithAuth(url, options = {}) {
     if (!jwtToken) {
-        window.location.href = '/src/pages/account.html';
+        window.location.href = '../../src/pages/account.html';
         return;
     }
     options.headers = {
@@ -68,7 +68,7 @@ async function fetchWithAuth(url, options = {}) {
     const response = await fetch(url, options);
     if (response.status === 401) {
         localStorage.removeItem('jwtToken');
-        window.location.href = '/src/pages/account.html';
+        window.location.href = '../../src/pages/account.html';
         return;
     }
     if (!response.ok) {
@@ -541,6 +541,6 @@ cancelLogoutButton.addEventListener('click', () => {
 
 confirmLogoutButton.addEventListener('click', () => {
     localStorage.removeItem('jwtToken');
-    window.location.href = '/src/pages/MobilePrepaid.html';
+    window.location.href = '../../src/pages/MobilePrepaid.html';
     console.log('Logged out and redirected');
 });

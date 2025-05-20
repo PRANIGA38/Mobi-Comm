@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const token = localStorage.getItem('jwtToken');
     if (!token) {
         showPopup('Please log in to access this page.', false);
-        setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+        setTimeout(() => window.location.href = '../../src/pages/account.html', 2000);
         return;
     }
 
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await fetchAndPaginateFeedback();
     } catch (error) {
         showPopup('Access denied: ' + error.message, false);
-        setTimeout(() => window.location.href = '/src/pages/account.html', 2000);
+        setTimeout(() => window.location.href = '../../src/pages/account.html', 2000);
     }
 });
 
@@ -59,7 +59,7 @@ if (typeof bootstrap !== 'undefined') {
 async function fetchWithAuth(url, options = {}) {
     if (!jwtToken) {
         console.error('No JWT token found, redirecting to login');
-        window.location.href = '/src/pages/account.html';
+        window.location.href = '../../src/pages/account.html';
         return;
     }
     options.headers = {
@@ -71,7 +71,7 @@ async function fetchWithAuth(url, options = {}) {
     if (response.status === 401) {
         console.error('Unauthorized - Redirecting to login');
         localStorage.removeItem('jwtToken');
-        window.location.href = '/src/pages/account.html';
+        window.location.href = '../../src/pages/account.html';
         return;
     }
     if (!response.ok) {
@@ -128,7 +128,7 @@ function paginateSubscribers(page) {
         row.innerHTML = `
             <td>
                 <div class="d-flex align-items-center">
-                    <img src="${subscriber.avatar || '/src/assets/icons/users.png'}" alt="${subscriber.name}" class="rounded-circle me-2" style="width: 40px; height: 40px;">
+                    <img src="${subscriber.avatar || '../../src/assets/icons/users.png'}" alt="${subscriber.name}" class="rounded-circle me-2" style="width: 40px; height: 40px;">
                     <div>
                         <div class="fw-medium">${subscriber.name}</div>
                         <div class="small text-muted">${subscriber.email || 'N/A'}</div>
@@ -219,7 +219,7 @@ async function openUserModal(userId) {
         const historyResponse = await fetchWithAuth(`${API_BASE_URL}/admin/subscribers/${userId}/recharge-history`);
         const rechargeHistory = await historyResponse.json();
 
-        document.getElementById('modal-user-avatar').src = user.avatar || '/src/assets/icons/users.png';
+        document.getElementById('modal-user-avatar').src = user.avatar || '../../src/assets/icons/users.png';
         document.getElementById('modal-user-name').textContent = user.name;
         document.getElementById('modal-user-phone').textContent = user.mobileNumber;
         document.getElementById('modal-user-email').textContent = user.email || 'N/A';
@@ -247,7 +247,7 @@ async function openUserModal(userId) {
                 const viewAllRow = document.createElement('tr');
                 viewAllRow.innerHTML = `
                     <td colspan="5" class="text-center">
-                        <a href="/src/pages/subscribers.html?userId=${userId}" class="btn btn-sm btn-primary">View All (${rechargeHistory.length} entries)</a>
+                        <a href="../../src/pages/subscribers.html?userId=${userId}" class="btn btn-sm btn-primary">View All (${rechargeHistory.length} entries)</a>
                     </td>
                 `;
                 rechargeHistoryTable.appendChild(viewAllRow);
@@ -300,7 +300,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const logoutLinks = document.querySelectorAll('.menu-item a[href="/src/pages/account.html"]');
+    const logoutLinks = document.querySelectorAll('.menu-item a[href="../../src/pages/account.html"]');
     if (logoutLinks.length > 0 && logoutModal) {
         logoutLinks.forEach(link => {
             link.addEventListener('click', (e) => {
@@ -321,7 +321,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 localStorage.removeItem('jwtToken');
                 logoutModal.style.display = 'none';
                 console.log('Logged out and redirected');
-                window.location.href = '/src/pages/MobilePrepaid.html';
+                window.location.href = '../../src/pages/MobilePrepaid.html';
             } catch (error) {
                 console.error('Error during logout:', error);
                 showPopup('Failed to log out. Please try again.', false);

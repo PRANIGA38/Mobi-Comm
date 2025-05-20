@@ -26,7 +26,7 @@ async function fetchWithAuth(url, options = {}) {
     console.log('JWT Token:', jwtToken); 
     if (!jwtToken) {
         console.error('No JWT token found, redirecting to login');
-        window.location.href = '/src/pages/account.html';
+        window.location.href = '../../src/pages/account.html';
         return;
     }
     options.headers = {
@@ -40,7 +40,7 @@ async function fetchWithAuth(url, options = {}) {
         console.error('Unauthorized or Forbidden - Redirecting to login');
         localStorage.removeItem('jwtToken');
         alert('Access denied. Please log in as an admin.');
-        window.location.href = '/src/pages/account.html';
+        window.location.href = '../../src/pages/account.html';
         return;
     }
     if (!response.ok) {
@@ -258,7 +258,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     confirmLogoutButton.addEventListener('click', () => {
         localStorage.removeItem('jwtToken');
-        window.location.href = '/src/pages/MobilePrepaid.html';
+        window.location.href = '../../src/pages/MobilePrepaid.html';
     });
 
     window.addEventListener('click', (event) => {
